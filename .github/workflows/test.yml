@@ -1,0 +1,9 @@
+# .github/workflows/test.yml
+name: Test
+on: [push]
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Say hello
+        run: echo "Actions are enabled!"
