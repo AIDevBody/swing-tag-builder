@@ -1,561 +1,305 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Swing Event Tags Selector</title>
-  <!--
-    This page dynamically loads tag categories from a publicly published
-    Google Sheet.  Each category is defined by a GID (grid ID) in
-    the `tagCategories` object below.  Tags are translated via
-    language-specific columns such as `display_en`, `display_de`, etc.
-    The available languages are determined by the intersection of
-    languages present across all category sheets.  If the visitor's
-    browser language is supported, it is selected automatically.
-    Visitors can select tags from each category, copy the resulting
-    tag string to their clipboard or start a new Google Calendar
-    event with the tags appended to the description.
-  -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.min.css" integrity="sha512-oHDEc8XedO9HRhcB1mxEiEqVJ29cNdV0U5KVKHGxIEw45vQ9rL79K19s+n7J5cizBqRjv0dso/veV8H/AqV+rA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Swing Tag Builder</title>
   <style>
-    body {
-      font-family: sans-serif;
-      margin: 0;
-      padding: 1rem;
-      max-width: 960px;
-    }
-    h1 {
-      text-align: center;
-    }
-    .category {
-      margin-bottom: 1rem;
-      padding-bottom: 0.5rem;
-      border-bottom: 1px solid #ccc;
-    }
-    .category-title {
-      font-weight: bold;
-      margin-bottom: 0.5rem;
-    }
-    .tag-list {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.5rem;
-    }
-    .tag-item {
-      display: flex;
-      align-items: center;
-      gap: 0.25rem;
-    }
-    .controls {
-      margin-top: 1.5rem;
-      display: flex;
-      flex-direction: column;
-      gap: 0.5rem;
-    }
-    textarea {
-      width: 100%;
-      min-height: 80px;
-      resize: vertical;
-      padding: 0.5rem;
-      font-size: 1rem;
-    }
-    button, select, a.calendar-link {
-      padding: 0.5rem 1rem;
-      font-size: 1rem;
-    }
-    .calendar-link {
-      display: inline-block;
-      text-decoration: none;
-      color: #fff;
-      background-color: #4285f4;
-      border-radius: 4px;
-    }
+    :root { --gap: 12px; --pad: 14px; --radius: 12px; font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif; }
+    body { margin: 0; padding: 20px; background: #0b0f16; color: #eaf0ff; }
+    a { color: #9bcbff; }
+    header { margin-bottom: 22px; }
+    .card { background: #121827; border: 1px solid #1f2a44; border-radius: var(--radius); padding: var(--pad); margin-bottom: var(--gap); }
+    .row { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: var(--gap); }
+    .group { border: 1px solid #233455; border-radius: var(--radius); padding: var(--pad); }
+    .group h3 { margin: 0 0 10px 0; font-size: 16px; font-weight: 600; color: #bcd1ff; }
+    .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+    .chip { border: 1px solid #2a3f66; padding: 6px 10px; border-radius: 999px; cursor: pointer; user-select: none; }
+    .chip.active { background: #244f92; border-color: #3a6db8; }
+    .controls { display: flex; gap: 8px; flex-wrap: wrap; }
+    button, select { background: #1a2540; color: #eaf0ff; border: 1px solid #2a3f66; border-radius: 10px; padding: 8px 10px; }
+    input[type="text"] { width: 100%; background: #0e1527; color: #eaf0ff; border: 1px solid #2a3f66; border-radius: 10px; padding: 10px; }
+    .muted { color: #9fb3d9; }
+    .footer { margin-top: 20px; font-size: 12px; }
+    details { margin-top: 8px; }
+    summary { cursor: pointer; }
+    .hidden { display:none; }
   </style>
-  <!-- Include PapaParse via CDN for CSV parsing -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js" integrity="sha512-4pVTTDP/EpYqxx2jXLNqybBlw7vSjnUj2In8D7EJqxLFHfvM9b6bZw3Aw3m6Hpd9DDTsLVljJ9gvgrqMwr0kBg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 </head>
 <body>
-  <h1>Swing Event Tag Selector</h1>
-  <noscript>
-    <p>JavaScript is required to use this page.</p>
-  </noscript>
-  <!-- Language selector placeholder -->
-  <div id="language-container" style="margin-bottom: 1rem;"></div>
-  <!-- Container for all categories -->
-  <div id="categories"></div>
-  <!-- Controls for output and actions -->
-  <div class="controls">
-    <label for="tag-output">Selected tags:</label>
-    <textarea id="tag-output" readonly></textarea>
-    <button id="copy-btn">Copy to clipboard</button>
-    <!-- The calendar link will be updated dynamically -->
-    <a id="calendar-link" class="calendar-link" href="#" target="_blank">Add to Google Calendar</a>
+  <header>
+    <h1>🎷 Swing Tag Builder</h1>
+    <p class="muted">Loads <code>/data/ui.csv</code> and <code>/data/tags.csv</code> (generated by the GitHub Action) and lets you compose tags. Choose a language to see display names.</p>
+  </header>
+
+  <section class="card">
+    <div class="controls">
+      <label>Language:&nbsp;
+        <select id="lang"></select>
+      </label>
+      <button id="copyHashtags">Copy hashtags</button>
+      <button id="clearAll">Clear all</button>
+    </div>
+    <details>
+      <summary>Output</summary>
+      <div style="margin-top:8px;">
+        <input id="hashtags" type="text" readonly />
+      </div>
+    </details>
+  </section>
+
+  <section id="groups" class="row"></section>
+
+  <div class="footer muted">
+    <p>CSV sources are mirrored from Google Sheets by <code>scripts/fetch_tags.js</code> into <code>/data</code>. Refresh after a push to see updates.</p>
   </div>
-  <!-- Debug log output.  When DEBUG is true, this area will
-       display logs for troubleshooting.  The user may set
-       DEBUG=false before publishing to hide this. -->
-  <pre id="debug-log" style="display:none; white-space:pre-wrap; background:#f7f7f7; border:1px solid #ccc; padding:0.5rem; margin-top:1rem; max-height:200px; overflow:auto;"></pre>
+
   <script>
-    // Set this flag to false before pushing to production to hide debug logs.
-    const DEBUG = true;
-
-    // Array to collect debug messages.  Logs will be appended here
-    // when DEBUG is true and displayed in the #debug-log element.
-    const debugLogs = [];
-
-    function log(...args) {
-      if (!DEBUG) return;
-      // Convert objects to JSON strings; join into a single line
-      const message = args.map(a => {
-        if (typeof a === 'object') {
-          try {
-            return JSON.stringify(a);
-          } catch (e) {
-            return String(a);
-          }
-        }
-        return String(a);
-      }).join(' ');
-      debugLogs.push(message);
-      console.log(...args);
-      updateDebugLog();
-    }
-
-    function updateDebugLog() {
-      if (!DEBUG) return;
-      const el = document.getElementById('debug-log');
-      if (el) {
-        el.textContent = debugLogs.join('\n');
-      }
-    }
-    // Mapping of tag categories to their respective grid IDs
-    const tagCategories = {
-      location:        '1613110947',
-      dance_type:      '1262810551',
-      event_type:      '1767805000',
-      level:           '21940718',
-      role:            '580185679',
-      music_speed:     '749180173',
-      music_source:    '1438046882',
-      language:        '1955960245',
-      venue_type:      '1295506722',
-      registration:    '2021528078',
-      price_type:      '1041725092',
-      age_policy:      '1166459861',
-      footwear:        '1367263539'
-    };
-
-    // UI type definitions for each category.  These values
-    // correspond to the "Swing‑Tags‑UI" sheet provided by the
-    // user.  If new categories are added or UI types change in
-    // that sheet, update this mapping accordingly.  Valid types:
-    //  - 'checkbox-multi' : multiple selections via checkboxes
-    //  - 'dropdown-single': single selection via a <select> element
-    const uiTypes = {
-      location:      'dropdown-single',
-      dance_type:    'checkbox-multi',
-      event_type:    'checkbox-multi',
-      level:         'dropdown-single',
-      role:          'checkbox-multi',
-      music_speed:   'checkbox-multi',
-      music_source:  'dropdown-single',
-      language:      'dropdown-single',
-      venue_type:    'dropdown-single',
-      registration:  'dropdown-single',
-      price_type:    'dropdown-single',
-      age_policy:    'dropdown-single',
-      footwear:      'checkbox-multi'
-    };
-
-    // Track the selected tag (if any) per category.  For
-    // checkbox-multi categories this is unused, but for
-    // dropdown-single categories it allows us to remove the previous
-    // selection when a new one is chosen.
-    const selectedPerCategory = {};
-
-    // Base URL for the published CSV.  Each call substitutes the GID.
-    const sheetBaseURL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRExGpjR2tcEK9n9jgca0Vug94etEFuouriCIKCrh6T0ez7XOMHlOvKgpyQIf5aqXuFMLCgoA-vhee6/pub?gid=GID&single=true&output=csv';
-
-    // When fetching Google Sheets CSVs, browsers block cross-origin requests due to
-    // CORS.  To work around this, enable USE_CORS_PROXY to prepend a proxy URL
-    // (like corsproxy.io) which forwards the request and adds the necessary
-    // CORS headers.  If you self-host a proxy or do not need this workaround,
-    // set USE_CORS_PROXY to false.  PROXY_BASE should include the trailing
-    // slash and query prefix.  See https://nordicapis.com/10-free-to-use-cors-proxies/ for details.
-    const USE_CORS_PROXY = true;
-    const PROXY_BASE = 'https://corsproxy.io/?';
-
-    // Optional: Load data from local files (in the same repository) instead of
-    // remote Google Sheets.  This is useful when a GitHub Action fetches the
-    // latest CSV files and commits them into a `data/` directory, which
-    // eliminates CORS issues entirely.  If USE_LOCAL_DATA is true, the page
-    // will fetch data from `${LOCAL_DATA_PATH}/${category}.csv`.  Set to
-    // false to fetch from Google Sheets via the base URL and proxy.
-    const USE_LOCAL_DATA = true;
-    const LOCAL_DATA_PATH = 'data';
-
-    // Storage for loaded data per category
-    const categoryData = {};
-    let availableLanguages = [];
-    let selectedLanguage = 'en';
-    let selectedTags = new Set();
-
-    /**
-     * Fetch and parse a CSV for a given category.
-     * Returns an array of objects representing rows.
-     */
-    async function loadCategoryData(category, gid) {
-      /**
-       * Attempt to load a CSV for a given category from a local file, and
-       * if that fails (e.g., because the file doesn't exist yet), fall back
-       * to downloading it directly from Google Sheets via the configured
-       * CORS proxy.  This allows the page to work even before the
-       * GitHub Action has populated the `data/` directory.
-       */
-      // Build local and remote URLs.  Local files live in the repository
-      // under LOCAL_DATA_PATH; remote files come from Google Sheets.
-      const localUrl = `${LOCAL_DATA_PATH}/${category}.csv`;
-      let remoteUrl = sheetBaseURL.replace('GID', gid);
-      if (USE_CORS_PROXY) {
-        remoteUrl = PROXY_BASE + encodeURIComponent(remoteUrl);
-      }
-      // Helper to fetch and parse a CSV given a URL.
-      const fetchCsv = async (url) => {
-        log('Fetching category', category, 'from', url);
-        const resp = await fetch(url);
-        if (!resp.ok) {
-          log('Failed to fetch', category, resp.status, resp.statusText);
-          return null;
-        }
-        const text = await resp.text();
-        const parsed = Papa.parse(text.trim(), { header: true });
-        log('Parsed', category, 'rows:', parsed.data.length);
-        return parsed.data;
-      };
-      // Try local fetch first if enabled.
-      if (USE_LOCAL_DATA) {
-        try {
-          const data = await fetchCsv(localUrl);
-          if (data && data.length > 0) return data;
-        } catch (err) {
-          log('Local fetch error for', category, err);
-        }
-      }
-      // Fallback: fetch from remote (Google Sheets).  If remote fetch also
-      // fails, return an empty array so the UI can display an error.
-      try {
-        const data = await fetchCsv(remoteUrl);
-        return data || [];
-      } catch (err) {
-        log('Remote fetch error for', category, err);
-        return [];
-      }
-    }
-
-    /**
-     * Determine the languages present in a sheet by inspecting column names starting with "display_".
-     */
-    function extractLanguages(row) {
-      return Object.keys(row)
-        .filter(key => key.startsWith('display_'))
-        .map(key => key.substring('display_'.length));
-    }
-
-    /**
-     * Intersect multiple arrays.
-     */
-    function intersectLanguages(lists) {
-      if (lists.length === 0) return [];
-      return lists.reduce((acc, arr) => acc.filter(x => arr.includes(x)));
-    }
-
-    /**
-     * Build the language selector dropdown and attach change handler.
-     */
-    function buildLanguageSelector() {
-      const container = document.getElementById('language-container');
-      if (availableLanguages.length === 0) {
-        container.innerHTML = '';
-        return;
-      }
-      const label = document.createElement('label');
-      label.setAttribute('for', 'language-select');
-      label.textContent = 'Language: ';
-      const select = document.createElement('select');
-      select.id = 'language-select';
-      availableLanguages.forEach(lang => {
-        const option = document.createElement('option');
-        option.value = lang;
-        option.textContent = lang;
-        if (lang === selectedLanguage) option.selected = true;
-        select.appendChild(option);
-      });
-      select.addEventListener('change', (e) => {
-        selectedLanguage = e.target.value;
-        refreshCategoryLabels();
-        updateOutput();
-      });
-      container.innerHTML = '';
-      container.appendChild(label);
-      container.appendChild(select);
-    }
-
-    /**
-     * Refresh the labels of all tag checkboxes when language changes.
-     */
-    function refreshCategoryLabels() {
-      for (const category of Object.keys(tagCategories)) {
-        const rows = categoryData[category] || [];
-        const uiType = uiTypes[category] || 'checkbox-multi';
-        if (uiType === 'checkbox-multi') {
-          const list = document.getElementById(`list-${category}`);
-          if (!list) continue;
-          const labels = list.querySelectorAll('label');
-          labels.forEach((labelEl) => {
-            const tag = labelEl.getAttribute('data-tag');
-            const row = rows.find(r => r.tag === tag);
-            const translationKey = `display_${selectedLanguage}`;
-            let text = '';
-            if (row && row[translationKey] && row[translationKey].trim()) {
-              text = row[translationKey];
-            } else if (row && row.display_en && row.display_en.trim()) {
-              text = row.display_en;
-            } else {
-              text = tag;
-            }
-            labelEl.textContent = text;
-          });
-        } else if (uiType === 'dropdown-single') {
-          const selectEl = document.getElementById(`select-${category}`);
-          if (!selectEl) continue;
-          rows.forEach(row => {
-            const activeValue = String(row['is-active'] || row['is_active']).toLowerCase();
-            if (activeValue !== 'true') return;
-            const tag = row.tag;
-            const optionEl = selectEl.querySelector(`option[value="${tag}"]`);
-            if (optionEl) {
-              const translationKey = `display_${selectedLanguage}`;
-              let text = '';
-              if (row[translationKey] && row[translationKey].trim()) {
-                text = row[translationKey];
-              } else if (row.display_en && row.display_en.trim()) {
-                text = row.display_en;
-              } else {
-                text = tag;
-              }
-              optionEl.textContent = text;
-            }
-          });
-        }
-      }
-    }
-
-    /**
-     * Build the category sections with checkboxes.
-     */
-    function buildCategoryUI() {
-      const container = document.getElementById('categories');
-      container.innerHTML = '';
-      for (const [category, rows] of Object.entries(categoryData)) {
-        const uiType = uiTypes[category] || 'checkbox-multi';
-        const section = document.createElement('div');
-        section.classList.add('category');
-        // Section title
-        const title = document.createElement('div');
-        title.classList.add('category-title');
-        title.textContent = category.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
-        section.appendChild(title);
-        if (uiType === 'checkbox-multi') {
-          // Create a flex container for checkboxes
-          const list = document.createElement('div');
-          list.classList.add('tag-list');
-          list.id = `list-${category}`;
-          rows.forEach(row => {
-            const activeValue = String(row['is-active'] || row['is_active']).toLowerCase();
-            if (activeValue !== 'true') return;
-            const tag = row.tag;
-            const item = document.createElement('div');
-            item.classList.add('tag-item');
-            const checkbox = document.createElement('input');
-            checkbox.type = 'checkbox';
-            checkbox.id = `${category}-${tag}`;
-            checkbox.value = tag;
-            checkbox.checked = selectedTags.has(tag);
-            checkbox.addEventListener('change', (e) => {
-              if (e.target.checked) {
-                selectedTags.add(tag);
-              } else {
-                selectedTags.delete(tag);
-              }
-              updateOutput();
-            });
-            const label = document.createElement('label');
-            label.setAttribute('for', checkbox.id);
-            label.setAttribute('data-tag', tag);
-            // Determine initial label text
-            const translationKey = `display_${selectedLanguage}`;
-            let text = '';
-            if (row[translationKey] && row[translationKey].trim()) {
-              text = row[translationKey];
-            } else if (row.display_en && row.display_en.trim()) {
-              text = row.display_en;
-            } else {
-              text = tag;
-            }
-            label.textContent = text;
-            item.appendChild(checkbox);
-            item.appendChild(label);
-            list.appendChild(item);
-          });
-          section.appendChild(list);
-        } else if (uiType === 'dropdown-single') {
-          // Create a dropdown for single selection
-          const select = document.createElement('select');
-          select.id = `select-${category}`;
-          select.style.maxWidth = '100%';
-          // Add an empty option for no selection
-          const emptyOption = document.createElement('option');
-          emptyOption.value = '';
-          emptyOption.textContent = '--';
-          select.appendChild(emptyOption);
-          rows.forEach(row => {
-            const activeValue = String(row['is-active'] || row['is_active']).toLowerCase();
-            if (activeValue !== 'true') return;
-            const tag = row.tag;
-            const option = document.createElement('option');
-            option.value = tag;
-            // Determine initial option text
-            const translationKey = `display_${selectedLanguage}`;
-            let text = '';
-            if (row[translationKey] && row[translationKey].trim()) {
-              text = row[translationKey];
-            } else if (row.display_en && row.display_en.trim()) {
-              text = row.display_en;
-            } else {
-              text = tag;
-            }
-            option.textContent = text;
-            // Set selected if this tag was previously chosen
-            if (selectedPerCategory[category] === tag) {
-              option.selected = true;
-            }
-            select.appendChild(option);
-          });
-          // Event handler for selection changes
-          select.addEventListener('change', (e) => {
-            const previous = selectedPerCategory[category];
-            if (previous) {
-              selectedTags.delete(previous);
-            }
-            const value = e.target.value;
-            if (value) {
-              selectedTags.add(value);
-              selectedPerCategory[category] = value;
-            } else {
-              delete selectedPerCategory[category];
-            }
-            updateOutput();
-          });
-          section.appendChild(select);
-        }
-        container.appendChild(section);
-      }
-    }
-
-    /**
-     * Update the output textarea and calendar link based on selected tags.
-     */
-    function updateOutput() {
-      const output = document.getElementById('tag-output');
-      const tagsArray = Array.from(selectedTags).map(tag => `#${tag}`);
-      const tagString = tagsArray.join(' ');
-      output.value = tagString;
-      // Update calendar link
-      const calendarLink = document.getElementById('calendar-link');
-      // Insert the tags into the details field after a separator line.  Use
-      // Google Calendar's eventedit endpoint for better compatibility.
-      let detailsParam = '';
-      if (tagString) {
-        detailsParam = '\n\n---\n' + tagString;
-      }
-      const encodedDetails = encodeURIComponent(detailsParam);
-      const calendarURL = 'https://calendar.google.com/calendar/u/0/r/eventedit?details=' + encodedDetails;
-      calendarLink.href = calendarURL;
-    }
-
-    /**
-     * Initialize the page: load all categories, determine languages,
-     * set default language and build UI.
-     */
-    async function init() {
-      // Load each category sequentially
-      const languageLists = [];
-      for (const [category, gid] of Object.entries(tagCategories)) {
-        const rows = await loadCategoryData(category, gid);
-        categoryData[category] = rows;
-        if (rows.length > 0) {
-          languageLists.push(extractLanguages(rows[0]));
-        }
-      }
-      // Compute available languages across all categories
-      availableLanguages = intersectLanguages(languageLists);
-      log('Available languages across sheets:', availableLanguages);
-      // Determine default language based on browser settings
-      const browserLang = (navigator.language || navigator.userLanguage || 'en').slice(0, 2).toLowerCase();
-      if (availableLanguages.includes(browserLang)) {
-        selectedLanguage = browserLang;
-      } else if (availableLanguages.includes('en')) {
-        selectedLanguage = 'en';
-      } else if (availableLanguages.length > 0) {
-        selectedLanguage = availableLanguages[0];
-      }
-      log('Selected language for labels:', selectedLanguage);
-      buildLanguageSelector();
-      buildCategoryUI();
-      // Refresh labels to reflect the chosen language
-      refreshCategoryLabels();
-      updateOutput();
-      // If no categories loaded (all arrays empty), show message
-      const anyData = Object.values(categoryData).some(rows => rows && rows.length > 0);
-      if (!anyData) {
-        const container = document.getElementById('categories');
-        container.innerHTML = '<p style="color:red;">No tag data loaded. Verify that the sheets are published and the URLs are reachable. See debug log for details.</p>';
-      }
-    }
-
-    // Copy button handler
-    document.getElementById('copy-btn').addEventListener('click', () => {
-      const text = document.getElementById('tag-output').value;
-      if (!navigator.clipboard) {
-        // Fallback: select and copy
-        const textarea = document.getElementById('tag-output');
-        textarea.focus();
-        textarea.select();
-        try {
-          document.execCommand('copy');
-          alert('Copied to clipboard');
-        } catch (err) {
-          alert('Unable to copy');
-        }
+  // Minimal CSV parser that handles quotes and commas
+  function parseCSV(text) {
+    const rows = [];
+    let cur = '', row = [], inQuotes = false;
+    for (let i = 0; i < text.length; i++) {
+      const c = text[i];
+      if (c === '\"') {
+        if (inQuotes && text[i+1] === '\"') { cur += '\"'; i++; }
+        else inQuotes = !inQuotes;
+      } else if (c === ',' && !inQuotes) {
+        row.push(cur); cur = '';
+      } else if ((c === '\n' || c === '\r') && !inQuotes) {
+        if (cur !== '' || row.length) { row.push(cur); rows.push(row); cur = ''; row = []; }
+        // handle \r\n pair
+        if (c === '\r' && text[i+1] === '\n') i++;
       } else {
-        navigator.clipboard.writeText(text).then(() => {
-          alert('Copied to clipboard');
-        }, (err) => {
-          alert('Unable to copy');
+        cur += c;
+      }
+    }
+    if (cur !== '' || row.length) { row.push(cur); rows.push(row); }
+    return rows;
+  }
+
+  async function fetchCSV(path) {
+    const res = await fetch(path, { cache: 'no-store' });
+    if (!res.ok) throw new Error('Failed to load ' + path);
+    const text = await res.text();
+    return parseCSV(text);
+  }
+
+  function headersToIndex(headers) {
+    const map = {};
+    headers.forEach((h, i) => map[h.trim()] = i);
+    return map;
+  }
+
+  function unique(arr) { return Array.from(new Set(arr)); }
+
+  // Build UI based on ui.csv (tag_type -> ui_type) and tags.csv
+  async function bootstrap() {
+    try {
+      const ui = await fetchCSV('data/ui.csv');
+      const tags = await fetchCSV('data/tags.csv');
+
+      if (ui.length === 0 || tags.length === 0) throw new Error('Empty CSV(s)');
+      const uiIdx = headersToIndex(ui[0]);
+      const tagsIdx = headersToIndex(tags[0]);
+
+      // Detect languages
+      const langHeaders = Object.keys(tagsIdx).filter(h => h.startsWith('display_'));
+      const languages = langHeaders.map(h => h.replace('display_', ''));
+      const langSel = document.getElementById('lang');
+      languages.forEach(l => {
+        const opt = document.createElement('option');
+        opt.value = l; opt.textContent = l;
+        langSel.appendChild(opt);
+      });
+      // Default: navigator language if available
+      const browserLang = (navigator.language || 'en').slice(0,2);
+      if (languages.includes(browserLang)) langSel.value = browserLang; else if (languages.includes('en')) langSel.value = 'en';
+
+      // Build map: tag_type -> ui_type
+      const typeToUI = {};
+      for (let i = 1; i < ui.length; i++) {
+        const row = ui[i];
+        if (!row.length) continue;
+        const typ = row[uiIdx['tag_type']]?.trim();
+        const uitype = row[uiIdx['ui_type']]?.trim();
+        if (typ && uitype) typeToUI[typ] = uitype;
+      }
+
+      // Build tag groups by type
+      const byType = {};
+      for (let i = 1; i < tags.length; i++) {
+        const row = tags[i];
+        if (!row.length) continue;
+        const typ = row[tagsIdx['tag_type']]?.trim();
+        const tag = row[tagsIdx['tag']]?.trim();
+        const activeIdx = tagsIdx['is-active'];
+        const active = (activeIdx == null) ? true : (String(row[activeIdx]).toLowerCase() !== 'false');
+        if (!typ || !tag || !active) continue;
+        const ent = {
+          tag,
+          display: (lang) => {
+            const h = 'display_' + lang;
+            const idx = tagsIdx[h];
+            return idx != null && row[idx] ? row[idx] : tag;
+          }
+        };
+        (byType[typ] ||= []).push(ent);
+      }
+
+      const container = document.getElementById('groups');
+      container.innerHTML = '';
+
+      const state = {}; // {type: Set(tags)}
+
+      function render() {
+        // Build hashtags string
+        const parts = [];
+        Object.keys(state).forEach(typ => {
+          state[typ].forEach(t => parts.push('#' + t));
         });
+        const out = parts.join(' ');
+        document.getElementById('hashtags').value = out;
       }
-    });
 
-    // Kick off initialisation when DOM is ready
-    document.addEventListener('DOMContentLoaded', init);
-
-    // Show debug log area when DEBUG is true
-    document.addEventListener('DOMContentLoaded', () => {
-      if (DEBUG) {
-        const dbg = document.getElementById('debug-log');
-        if (dbg) dbg.style.display = 'block';
+      function toggle(type, tag, on) {
+        state[type] ||= new Set();
+        if (on) state[type].add(tag);
+        else state[type].delete(tag);
+        render();
       }
-    });
+
+      function renderGroup(type, items, uiType) {
+        const lang = langSel.value;
+        const card = document.createElement('div');
+        card.className = 'group';
+        const h = document.createElement('h3');
+        h.textContent = type + ' (' + uiType + ')';
+        card.appendChild(h);
+
+        if (uiType === 'dropdown') {
+          const sel = document.createElement('select');
+          const emptyOpt = document.createElement('option');
+          emptyOpt.textContent = '—';
+          emptyOpt.value = '';
+          sel.appendChild(emptyOpt);
+          items.forEach(it => {
+            const opt = document.createElement('option');
+            opt.value = it.tag; opt.textContent = it.display(lang);
+            sel.appendChild(opt);
+          });
+          sel.addEventListener('change', () => {
+            state[type] = new Set();
+            if (sel.value) state[type].add(sel.value);
+            render();
+          });
+          card.appendChild(sel);
+        } else if (uiType === 'radio') {
+          items.forEach((it, i) => {
+            const id = `${type}-r-${i}`;
+            const lab = document.createElement('label');
+            lab.style.display = 'block';
+            const input = document.createElement('input');
+            input.type = 'radio'; input.name = 'r-' + type; input.id = id; input.value = it.tag;
+            input.addEventListener('change', () => {
+              state[type] = new Set([it.tag]); render();
+            });
+            lab.appendChild(input);
+            const span = document.createElement('span'); span.textContent = ' ' + it.display(lang);
+            lab.appendChild(span);
+            card.appendChild(lab);
+          });
+        } else if (uiType === 'checkbox') {
+          items.forEach((it, i) => {
+            const id = `${type}-c-${i}`;
+            const lab = document.createElement('label');
+            lab.style.display = 'block';
+            const input = document.createElement('input');
+            input.type = 'checkbox'; input.id = id; input.value = it.tag;
+            input.addEventListener('change', () => toggle(type, it.tag, input.checked));
+            lab.appendChild(input);
+            const span = document.createElement('span'); span.textContent = ' ' + it.display(lang);
+            lab.appendChild(span);
+            card.appendChild(lab);
+          });
+        } else if (uiType === 'multi') {
+          const sel = document.createElement('select');
+          sel.multiple = true;
+          sel.size = Math.min(8, Math.max(3, items.length));
+          items.forEach(it => {
+            const opt = document.createElement('option');
+            opt.value = it.tag; opt.textContent = it.display(lang);
+            sel.appendChild(opt);
+          });
+          sel.addEventListener('change', () => {
+            const chosen = new Set(Array.from(sel.selectedOptions).map(o => o.value));
+            state[type] = chosen; render();
+          });
+          card.appendChild(sel);
+        } else if (uiType === 'chips') {
+          const wrap = document.createElement('div');
+          wrap.className = 'chips';
+          items.forEach(it => {
+            const chip = document.createElement('div');
+            chip.className = 'chip';
+            chip.textContent = it.display(lang);
+            chip.addEventListener('click', () => {
+              const active = chip.classList.toggle('active');
+              toggle(type, it.tag, active);
+            });
+            wrap.appendChild(chip);
+          });
+          card.appendChild(wrap);
+        } else {
+          const p = document.createElement('p');
+          p.className = 'muted';
+          p.textContent = `Unknown ui_type: ${uiType}`;
+          card.appendChild(p);
+        }
+
+        container.appendChild(card);
+      }
+
+      Object.keys(byType).sort().forEach(type => {
+        const uiType = typeToUI[type] || 'checkbox';
+        renderGroup(type, byType[type], uiType);
+      });
+
+      langSel.addEventListener('change', () => {
+        // re-render all groups with new language
+        container.querySelectorAll('.group').forEach(g => g.remove());
+        Object.keys(byType).sort().forEach(type => {
+          const uiType = typeToUI[type] || 'checkbox';
+          renderGroup(type, byType[type], uiType);
+        });
+        render();
+      });
+
+      document.getElementById('copyHashtags').addEventListener('click', async () => {
+        const el = document.getElementById('hashtags');
+        el.select(); el.setSelectionRange(0, 99999);
+        try { await navigator.clipboard.writeText(el.value); } catch {}
+      });
+      document.getElementById('clearAll').addEventListener('click', () => {
+        Object.keys(state).forEach(k => state[k].clear && state[k].clear());
+        state.length = 0;
+        // full rerender to reset inputs
+        container.querySelectorAll('.group').forEach(g => g.remove());
+        Object.keys(byType).sort().forEach(type => {
+          const uiType = typeToUI[type] || 'checkbox';
+          renderGroup(type, byType[type], uiType);
+        });
+        document.getElementById('hashtags').value = '';
+      });
+
+      render();
+    } catch (e) {
+      document.body.insertAdjacentHTML('beforeend', '<div class="card">Failed to load CSVs from <code>/data</code>. Push to the repo to let the Action fetch them, or place CSVs manually.</div>');
+      console.error(e);
+    }
+  }
+
+  bootstrap();
   </script>
 </body>
 </html>
