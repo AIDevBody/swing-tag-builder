@@ -1,0 +1,276 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Swing Tag Builder</title>
+<meta name="description" content="Pick tags from the Swing-Tags-SoT and copy hashtags for calendar event descriptions."/>
+<link rel="preconnect" href="https://unpkg.com">
+<script src="https://unpkg.com/papaparse@5.4.1/papaparse.min.js"></script>
+<style>
+  :root { --pad:12px; --radius:14px; --maxw:1100px; }
+  body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;margin:0;background:#fafafb;color:#111}
+  header{display:flex;gap:10px;align-items:center;justify-content:space-between;padding:16px 18px;border-bottom:1px solid #eee;background:#fff;position:sticky;top:0;z-index:10}
+  h1{font-size:18px;margin:0}
+  .controls{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  .panel{max-width:var(--maxw);margin:16px auto;padding:0 16px}
+  fieldset{background:#fff;border:1px solid #e6e6eb;border-radius:var(--radius);padding:var(--pad);margin:10px 0}
+  legend{font-weight:700;padding:0 8px}
+  .toolbar{display:flex;gap:8px;flex-wrap:wrap;margin:6px 0}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:8px 12px}
+  label.item{display:flex;gap:8px;align-items:center;padding:6px 8px;border-radius:10px}
+  label.item:hover{background:#f7f7f9}
+  .chip{padding:2px 6px;border:1px solid #ddd;border-radius:999px;font-size:12px}
+  button,select,input[type=text]{padding:8px 10px;border-radius:10px;border:1px solid #d0d0d5;background:#fff;cursor:pointer}
+  button.primary{background:#111827;color:#fff;border-color:#111827}
+  .muted{color:#555}
+  .small{font-size:12px}
+  .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  .footer{max-width:var(--maxw);margin:16px auto;padding:0 16px;color:#666}
+  .note{background:#fff3cd;border:1px solid #ffe69c;padding:8px 10px;border-radius:10px}
+  .section-head{display:flex;align-items:center;justify-content:space-between;gap:8px}
+</style>
+</head>
+<body>
+  <header>
+    <h1>🎯 Swing Tag Builder</h1>
+    <div class="controls">
+      <label>Labels
+        <select id="lang"></select>
+      </label>
+      <label class="small"><input type="checkbox" id="showHash" checked> show “#”</label>
+      <label>Separator
+        <select id="sep">
+          <option value="space">space</option>
+          <option value="newline">new line</option>
+          <option value="comma">comma</option>
+        </select>
+      </label>
+      <input id="search" type="text" placeholder="Filter tags…">
+      <button id="clear">Clear</button>
+      <button class="primary" id="copy">Copy hashtags</button>
+      <span class="small" id="copied" style="display:none;">✅ Copied!</span>
+    </div>
+  </header>
+
+  <div class="panel">
+    <div class="row small muted">
+      <span>Data: <code>UI</code> from Google Sheet (view-only) · <code>Tags SoT</code> published as CSV.</span>
+    </div>
+  </div>
+
+  <div class="panel" id="root">Loading tags…</div>
+
+  <div class="panel">
+    <div class="section-head">
+      <strong>Paste block preview</strong>
+      <div class="row">
+        <label>Copy as
+          <select id="copyMode">
+            <option value="hashtags">Hashtags only</option>
+            <option value="header">Header block (with “Tags:”)</option>
+          </select>
+        </label>
+        <input id="eventTitle" type="text" placeholder="Optional title for Google Calendar"/>
+        <input id="eventLocation" type="text" placeholder="Optional location"/>
+        <button id="openGCal">Create in Google Calendar</button>
+      </div>
+    </div>
+    <pre id="preview" class="panel" style="white-space:pre-wrap;background:#fff;border:1px solid #eee;border-radius:12px;padding:12px;overflow:auto;max-height:300px;"></pre>
+  </div>
+
+  <div class="footer small">This page is static (GitHub Pages). It pulls fresh CSVs on each load. Google may cache “Publish to web” for a few minutes.</div>
+
+<script>
+const UI_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSE4bUsbuTS-qr0DMeYOtNyD9dJyEtOIR_nqacFDfHthDgmxOF45oXSAI7UADlT0lJbicDP45G5s_KG/pub?gid=0&single=true&output=csv";
+const TAGS_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRExGpjR2tcEK9n9jgca0Vug94etEFuouriCIKCrh6T0ez7XOMHlOvKgpyQIf5aqXuFMLCgoA-vhee6/pub?output=csv";
+
+const STATE = { tagsByType: {}, uiByType: {}, langs: [], lang: 'en', showHash: true, q: '', sep: 'space' };
+
+function $(id){ return document.getElementById(id); }
+function esc(s){ return (s||'').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function truthy(v){ return String(v||'').trim().toLowerCase() === 'true'; }
+function humanize(s){ return (s||'').replace(/-/g,' ').replace(/\b\w/g,c=>c.toUpperCase()); }
+function twoLetter(lc){ return (lc||'en').split('-')[0].toLowerCase(); }
+
+async function loadUIConfig() {
+  const text = await fetch(UI_CSV_URL, { cache:'no-store' }).then(r=>{ if(!r.ok) throw new Error('UI CSV '+r.status); return r.text(); });
+  const parsed = Papa.parse(text.trim(), { header:true, skipEmptyLines:true });
+  const map = {};
+  (parsed.data||[]).forEach(r=>{
+    const keys = Object.keys(r);
+    const type = (r[keys[0]]||'').toString().trim().toLowerCase();
+    const ui   = (r[keys[1]]||'').toString().trim().toLowerCase();
+    if (!type) return;
+    map[type] = ui || 'checkbox';
+  });
+  return map;
+}
+
+async function loadTags() {
+  const text = await fetch(TAGS_CSV_URL, { cache:'no-store' }).then(r=>{ if(!r.ok) throw new Error('Tags CSV '+r.status); return r.text(); });
+  const parsed = Papa.parse(text.trim(), { header:true, skipEmptyLines:true });
+  const rows = parsed.data||[];
+  const headers = parsed.meta.fields || Object.keys(rows[0]||{});
+  const langs = headers.filter(h=>/^display_/i.test(h)).map(h=>h.split('_')[1].toLowerCase());
+  if (!langs.length) langs.push('en');
+  STATE.langs = Array.from(new Set(langs));
+
+  const out = {};
+  rows.forEach(r=>{
+    const type = (r.tag_type||'').toString().trim().toLowerCase();
+    const tag  = (r.tag||'').toString().trim().toLowerCase();
+    const active = (r['is-active'] == null) ? true : truthy(r['is-active']); // default active if missing
+    if (!type || !tag || !active) return;
+    const item = { tag_type:type, tag };
+    STATE.langs.forEach(l=> item['display_'+l] = (r['display_'+l]||'').toString().trim());
+    (out[type] = out[type] || []).push(item);
+  });
+  return out;
+}
+
+function initLangSelector() {
+  const sel = $('lang');
+  sel.innerHTML = '';
+  STATE.langs.forEach(l=>{
+    const opt = document.createElement('option'); opt.value = l; opt.textContent = l.toUpperCase(); sel.appendChild(opt);
+  });
+  const browser = twoLetter(navigator.language||'en');
+  STATE.lang = STATE.langs.includes(browser) ? browser : (STATE.langs.includes('en') ? 'en' : STATE.langs[0]);
+  sel.value = STATE.lang;
+  sel.onchange = e => { STATE.lang = e.target.value; render(); updatePreview(); };
+}
+
+function nameFor(item) {
+  const key = 'display_'+STATE.lang;
+  const fb = STATE.langs.find(l => (item['display_'+l]||'').length);
+  return (item[key]|| item['display_en'] || (fb?item['display_'+fb]:'') || humanize(item.tag));
+}
+
+function render() {
+  const root = $('root');
+  root.innerHTML='';
+  const types = Object.keys(STATE.tagsByType).sort();
+  if (!types.length) { root.textContent = 'No tags found. Check your Tags CSV format.'; return; }
+
+  types.forEach(type=>{
+    const fs = document.createElement('fieldset');
+    const lg = document.createElement('legend'); lg.textContent = type.replace(/_/g,' ').replace(/\b\w/g,c=>c.toUpperCase()); fs.appendChild(lg);
+
+    const tools = document.createElement('div'); tools.className='toolbar';
+    const all = document.createElement('button'); all.textContent='Select all';
+    const none = document.createElement('button'); none.textContent='Clear';
+    all.onclick=()=>{ sectionInputs(fs).forEach(cb=> cb.checked = true); updatePreview(); };
+    none.onclick=()=>{ sectionInputs(fs).forEach(cb=> cb.checked = false); updatePreview(); };
+    fs.appendChild(tools); tools.append(all); tools.append(none);
+
+    const mode = (STATE.uiByType[type]||'checkbox').toLowerCase();
+    if (mode==='dropdown' || mode==='single' || mode==='select') {
+      const select = document.createElement('select'); select.dataset.type = type;
+      const empty = document.createElement('option'); empty.value=''; empty.textContent='—';
+      select.appendChild(empty);
+      (STATE.tagsByType[type]||[]).forEach(item=>{
+        const opt = document.createElement('option'); opt.value=item.tag; opt.textContent = nameFor(item) + '  #' + item.tag;
+        select.appendChild(opt);
+      });
+      select.onchange = updatePreview;
+      fs.appendChild(select);
+    } else if (mode==='radio' || mode==='single-choice') {
+      const grid = document.createElement('div'); grid.className='grid';
+      (STATE.tagsByType[type]||[]).forEach(item=>{
+        const label = document.createElement('label'); label.className='item';
+        const rb = document.createElement('input'); rb.type='radio'; rb.name='radio_'+type; rb.dataset.type=type; rb.value=item.tag;
+        rb.onchange = updatePreview;
+        const span = document.createElement('span'); span.innerHTML = esc(nameFor(item)) + ' <span class="chip">'+(STATE.showHash?'#':'')+esc(item.tag)+'</span>';
+        label.appendChild(rb); label.appendChild(span); grid.appendChild(label);
+      });
+      fs.appendChild(grid);
+    } else {
+      const grid = document.createElement('div'); grid.className='grid';
+      (STATE.tagsByType[type]||[]).forEach(item=>{
+        const label = document.createElement('label'); label.className='item';
+        const cb = document.createElement('input'); cb.type='checkbox'; cb.dataset.type=type; cb.value=item.tag;
+        cb.onchange = updatePreview;
+        const span = document.createElement('span'); span.innerHTML = esc(nameFor(item)) + ' <span class="chip">'+(STATE.showHash?'#':'')+esc(item.tag)+'</span>';
+        label.appendChild(cb); label.appendChild(span); grid.appendChild(label);
+      });
+      fs.appendChild(grid);
+    }
+    $('root').appendChild(fs);
+  });
+  updatePreview();
+}
+
+function sectionInputs(fs){ return Array.from(fs.querySelectorAll('input[type=checkbox], input[type=radio]')); }
+
+function selectedTags() {
+  const tags = [];
+  document.querySelectorAll('input[type=checkbox][data-type]').forEach(cb=>{ if(cb.checked) tags.push(cb.value); });
+  document.querySelectorAll('input[type=radio][data-type]:checked').forEach(rb=> tags.push(rb.value));
+  document.querySelectorAll('select[data-type]').forEach(sel=>{ if (sel.value) tags.push(sel.value); });
+  return tags;
+}
+
+function buildHashtags(){
+  const tags = selectedTags();
+  const glue = STATE.sep==='space' ? ' ' : (STATE.sep==='comma' ? ', ' : '\n');
+  return tags.map(t=>'#'+t).join(glue);
+}
+
+function buildHeaderBlock(){
+  const hashtags = buildHashtags();
+  if (!hashtags) return '';
+  return 'Tags:\n' + hashtags + '\n\n—\n';
+}
+
+function updatePreview(){
+  const mode = $('copyMode').value;
+  const text = mode==='header' ? buildHeaderBlock() : buildHashtags();
+  $('preview').textContent = text;
+}
+
+function copyText(s){
+  if (!s) return;
+  navigator.clipboard.writeText(s).then(()=>{ $('copied').style.display='inline'; setTimeout(()=> $('copied').style.display='none',1200); });
+}
+
+function openGCal(){
+  const title = $('eventTitle').value.trim();
+  const location = $('eventLocation').value.trim();
+  const details = buildHeaderBlock() || buildHashtags();
+  const params = new URLSearchParams();
+  if (title) params.set('text', title);
+  if (details) params.set('details', details);
+  if (location) params.set('location', location);
+  const url = 'https://calendar.google.com/calendar/u/0/r/eventedit?' + params.toString();
+  window.open(url, '_blank');
+}
+
+$('copy').onclick = () => { const mode = $('copyMode').value; const s = mode==='header'?buildHeaderBlock():buildHashtags(); copyText(s); };
+$('openGCal').onclick = openGCal;
+$('clear').onclick = () => { document.querySelectorAll('input[type=checkbox][data-type]').forEach(cb=>cb.checked=false);
+                               document.querySelectorAll('input[type=radio][data-type]').forEach(rb=>rb.checked=false);
+                               document.querySelectorAll('select[data-type]').forEach(sel=>sel.value=''); updatePreview(); };
+$('showHash').onchange = e => { STATE.showHash = e.target.checked; render(); };
+$('search').oninput = e => { STATE.q = e.target.value.trim().toLowerCase();
+  document.querySelectorAll('#root label.item').forEach(label=>{ 
+    const txt = label.textContent.toLowerCase();
+    label.style.display = txt.includes(STATE.q) ? '' : 'none';
+  });
+};
+$('sep').onchange = e => { STATE.sep = e.target.value; updatePreview(); };
+
+(async function start() {
+  try {
+    STATE.uiByType = await loadUIConfig();
+    STATE.tagsByType = await loadTags();
+    initLangSelector();
+    render();
+  } catch (err) {
+    $('root').innerHTML = '<div class="note">❌ Could not load CSVs. Check that both links are Published to the web and reachable cross-origin.<br><br><code>'
+      + esc(String(err)) + '</code></div>';
+  }
+})();
+</script>
+</body>
+</html>
