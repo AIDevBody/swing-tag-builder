@@ -1,0 +1,31 @@
+name: Update Tags Data
+
+on:
+  # Schedule the workflow to run daily at midnight UTC.  Adjust cron as needed.
+  schedule:
+    - cron: '0 0 * * *'
+  # Allow manual triggering of the workflow via the GitHub Actions UI.
+  workflow_dispatch:
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+      - name: Install dependencies
+        run: npm install node-fetch@3
+      - name: Fetch latest tags and UI CSVs
+        run: node scripts/fetch_tags.js
+      - name: Commit and push updated data
+        uses: EndBug/add-and-commit@v9
+        with:
+          add: 'data/*.csv'
+          message: 'Update tags data'
+          default_author: github_actions
