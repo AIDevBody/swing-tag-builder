@@ -1,0 +1,23 @@
+{
+  "title": "Tag-Builder für Source Calendars",
+  "header": "Tag-Builder für Source Calendars",
+  "language_label": "Sprache:",
+  "howto_heading": "Anleitung",
+  "howto_lines": [
+    "Durchsuche jede Tag-Kategorie und wähle die Optionen über die angezeigten UI-Elemente (Dropdowns oder Chips).",
+    "Deine Auswahl wird im untenstehenden Textfeld gespiegelt. Wenn du dein Event bereits erstellt hast, kopiere einfach die Tags und füge sie unter deine Eventbeschreibung ein."
+  ],
+  "selected_tags_label": "Ausgewählte Tags",
+  "copy_tags_button": "Tags kopieren",
+  "copy_success": "Kopiert!",
+  "copy_error": "Drücke Strg/Cmd+C zum Kopieren.",
+  "event_title_label": "Eventtitel",
+  "event_title_placeholder": "z.B. Anfänger-Lindy-Hop-Kurs",
+  "location_label": "Ort",
+  "location_placeholder": "z.B. Weimar, Deutschland",
+  "description_label": "Beschreibung",
+  "description_placeholder": "Optionale Notizen.",
+  "create_event_button": "Event erstellen",
+  "clear_selections_button": "Auswahl löschen",
+  "select_placeholder": "— auswählen —"
+}

@@ -9,6 +9,10 @@ music_source,dropdown-single
 language,dropdown-single
 venue_type,dropdown-single
 registration,dropdown-single
+price_type,checkbox-multi
+age_policy,dropdown-single
+footwear,dropdown-single
+registration,dropdown-single
 price_type,dropdown-single
 age_policy,dropdown-single
 footwear,checkbox-multi

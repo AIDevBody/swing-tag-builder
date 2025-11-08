@@ -1,7 +1,6 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <base href="./">
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Tag Builder for Source Calendars</title>
@@ -119,30 +118,24 @@
   </style>
 </head>
 <body>
-
-        <div id="file-warning" style="display:none;background:#fff3cd;color:#856404;padding:12px;border:1px solid #ffeeba;border-radius:8px;margin:12px 0;">
-          ⚠️ Local file mode detected. Run via a local server or GitHub Pages so CSVs can load.
-        </div>
-        
-
   <div class="wrap">
     <header>
-  <base href="./">
-      <h1>Tag Builder for Source Calendars</h1>
+      <!-- Add id to header title for translation -->
+      <h1 id="header-title">Tag Builder for Source Calendars</h1>
       <div class="lang-select">
-        <span class="muted">Language:</span>
+        <!-- Add id to language label for translation -->
+        <span class="muted" id="language-label">Language:</span>
         <select id="lang-select"></select>
       </div>
     </header>
 
     <div class="card" id="howto">
       <div class="muted">
-        <strong>How to use</strong>
-        <ol>
-          <li>Choose your preferred language from the top-right selector. English is the fallback; if a translation is missing, the raw tag is shown.</li>
+        <!-- Add id to howto heading and list for translation -->
+        <strong id="howto-heading">How to use</strong>
+        <ol id="howto-list">
           <li>Browse each tag category and select the options using the shown UI (dropdowns or chips).</li>
-          <li>Your selections are mirrored in the textbox below. Click <em>Copy tags</em> to copy them.</li>
-          <li>Click <em>Create the event</em> to open Google Calendar with your description plus the tags appended, separated by a line of <code>----------</code>.</li>
+          <li>Your selections are mirrored in the textbox below. If you have your event already set up just copy the tags and put it below your event description.</li>
         </ol>
       </div>
     </div>
@@ -151,7 +144,7 @@
 
     <div class="card">
       <div class="row">
-        <label>Selected tags</label>
+        <label id="selected-tags-label">Selected tags</label>
         <div>
           <textarea id="tags-text"></textarea>
           <div class="btn-row" style="margin-top:10px;">
@@ -164,20 +157,27 @@
 
     <div class="card">
       <div class="row">
-        <label>Event title</label>
+        <label id="event-title-label">Event title</label>
         <input type="text" id="ev-title" placeholder="e.g., Beginner Lindy Hop Class" />
       </div>
       <div class="row">
-        <label>Location</label>
+        <label id="location-label">Location</label>
         <input type="text" id="ev-location" placeholder="e.g., Weimar, Germany" />
       </div>
       <div class="row">
-        <label>Description</label>
-        <textarea id="ev-desc" placeholder="Optional notes. The tags will be appended below a dashed line."></textarea>
+        <label id="description-label">Description</label>
+        <textarea id="ev-desc" placeholder="Optional notes."></textarea>
       </div>
       <div class="btn-row" style="margin-top:6px;">
         <button class="btn" id="create-btn">Create the event</button>
-        <button class="btn btn-ghost" id="<script>
+        <button class="btn btn-ghost" id="clear-btn" title="Clear all selections">Clear selections</button>
+      </div>
+    </div>
+
+    <!-- Footer removed per requirements -->
+  </div>
+
+<script>
 /** Categories to render (expects CSV at tags/all/<category>.csv) */
 const CATEGORIES = [
   "location",
@@ -206,6 +206,121 @@ const STATE = {
   data: {},               // category -> rows[]
   selections: {},         // category -> Set(ids) or string for single
 };
+
+  /** UI translation strings. These provide the default English text for
+   *  the user interface. When a language-specific translation is loaded
+   *  from resources/local/<lang>/strings.json, its values will override
+   *  these defaults. Add or remove keys here to control which elements
+   *  are translatable.
+   */
+  const UI_STRINGS = {
+    title: "Tag Builder for Source Calendars",
+    header: "Tag Builder for Source Calendars",
+    language_label: "Language:",
+    howto_heading: "How to use",
+    // How‑to lines are kept short; long sentences should not be placed in lists
+    howto_lines: [
+      "Browse each tag category and select the options using the shown UI (dropdowns or chips).",
+      "Your selections are mirrored in the textbox below. If you have your event already set up just copy the tags and put it below your event description."
+    ],
+    selected_tags_label: "Selected tags",
+    copy_tags_button: "Copy tags",
+    copy_success: "Copied!",
+    copy_error: "Press Ctrl/Cmd+C to copy.",
+    event_title_label: "Event title",
+    event_title_placeholder: "e.g., Beginner Lindy Hop Class",
+    location_label: "Location",
+    location_placeholder: "e.g., Weimar, Germany",
+    description_label: "Description",
+    description_placeholder: "Optional notes.",
+    create_event_button: "Create the event",
+    clear_selections_button: "Clear selections",
+    select_placeholder: "— select —"
+  };
+
+  // This object holds the currently active UI strings. It defaults to the
+  // English values above and will be overwritten when a translation file
+  // is loaded.
+  let CURRENT_UI_STRINGS = { ...UI_STRINGS };
+
+  /**
+   * Load UI translation strings for the given language code. If the
+   * translation cannot be found or fails to parse, the English defaults
+   * remain in place. The translation files should be placed under
+   * resources/local/<lang>/strings.json where <lang> is a two‑letter code.
+   */
+  async function loadTranslationsUI(lang) {
+    if (!lang || lang.toLowerCase() === "en") {
+      CURRENT_UI_STRINGS = { ...UI_STRINGS };
+      applyTranslations();
+      return;
+    }
+    try {
+      const res = await fetch(`resources/local/${lang}/strings.json`);
+      if (res.ok) {
+        const data = await res.json();
+        CURRENT_UI_STRINGS = { ...UI_STRINGS, ...data };
+      } else {
+        CURRENT_UI_STRINGS = { ...UI_STRINGS };
+      }
+    } catch (e) {
+      CURRENT_UI_STRINGS = { ...UI_STRINGS };
+    }
+    applyTranslations();
+  }
+
+  /**
+   * Apply the current translation strings to the DOM. This function
+   * updates the text content and placeholders of various elements that
+   * are identified by id attributes. It also rebuilds the How‑to list
+   * items based on the translation's howto_lines array.
+   */
+  function applyTranslations() {
+    // Document title and header
+    document.title = CURRENT_UI_STRINGS.title;
+    const headerTitle = document.getElementById("header-title");
+    if (headerTitle) headerTitle.textContent = CURRENT_UI_STRINGS.header;
+    // Language label
+    const langLabel = document.getElementById("language-label");
+    if (langLabel) langLabel.textContent = CURRENT_UI_STRINGS.language_label;
+    // How to use heading and list
+    const howtoHeading = document.getElementById("howto-heading");
+    if (howtoHeading) howtoHeading.textContent = CURRENT_UI_STRINGS.howto_heading;
+    const howtoList = document.getElementById("howto-list");
+    if (howtoList && Array.isArray(CURRENT_UI_STRINGS.howto_lines)) {
+      howtoList.innerHTML = "";
+      CURRENT_UI_STRINGS.howto_lines.forEach(line => {
+        const li = document.createElement("li");
+        li.textContent = line;
+        howtoList.appendChild(li);
+      });
+    }
+    // Selected tags label
+    const selTagsLabel = document.getElementById("selected-tags-label");
+    if (selTagsLabel) selTagsLabel.textContent = CURRENT_UI_STRINGS.selected_tags_label;
+    // Buttons
+    const copyBtn = document.getElementById("copy-btn");
+    if (copyBtn) copyBtn.textContent = CURRENT_UI_STRINGS.copy_tags_button;
+    const createBtn = document.getElementById("create-btn");
+    if (createBtn) createBtn.textContent = CURRENT_UI_STRINGS.create_event_button;
+    const clearBtn = document.getElementById("clear-btn");
+    if (clearBtn) clearBtn.textContent = CURRENT_UI_STRINGS.clear_selections_button;
+    // Event labels and placeholders
+    const evTitleLabel = document.getElementById("event-title-label");
+    if (evTitleLabel) evTitleLabel.textContent = CURRENT_UI_STRINGS.event_title_label;
+    const evTitleInput = document.getElementById("ev-title");
+    if (evTitleInput) evTitleInput.placeholder = CURRENT_UI_STRINGS.event_title_placeholder;
+    const locLabel = document.getElementById("location-label");
+    if (locLabel) locLabel.textContent = CURRENT_UI_STRINGS.location_label;
+    const locInput = document.getElementById("ev-location");
+    if (locInput) locInput.placeholder = CURRENT_UI_STRINGS.location_placeholder;
+    const descLabel = document.getElementById("description-label");
+    if (descLabel) descLabel.textContent = CURRENT_UI_STRINGS.description_label;
+    const descInput = document.getElementById("ev-desc");
+    if (descInput) descInput.placeholder = CURRENT_UI_STRINGS.description_placeholder;
+    // Re-render the form to update select placeholders and tag labels
+    renderForm();
+  }
 
 /** CSV parser */
 function parseCSV(text) {
@@ -244,16 +359,9 @@ function parseCSV(text) {
   });
 }
 
-async async function loadCSV(path){
-  const url = new URL(path, document.baseURI).href;
-  const res = await fetch(url);
-  if(!res.ok) throw new Error('HTTP '+res.status);
-  const text = await res.text();
-  const rows = text.trim().split(/?
-/).map(l => l.split(','));
-  const headers = rows.shift() || [];
-  return rows.map(r => Object.fromEntries(headers.map((h,i)=>[h.trim(), (r[i]||'').trim()])));
-}: ${res.status}`);
+async function loadCSV(path) {
+  const res = await fetch(path);
+  if (!res.ok) throw new Error(`Failed to load ${path}: ${res.status}`);
   const text = await res.text();
   return parseCSV(text);
 }
@@ -299,6 +407,8 @@ function bestLabel(row, langs) {
 function valueKeyOf(rows){
   if (!rows.length) return "id";
   const cols = Object.keys(rows[0]);
+  // Prefer 'tag' as the value key for tag CSVs
+  if (cols.includes("tag")) return "tag";
   if (cols.includes("id")) return "id";
   if (cols.includes("value")) return "value";
   return cols[0];
@@ -337,7 +447,7 @@ function ensureSelectionStore(cat, multiple){
 }
 
 function renderControl(cat, uiType, options){
-  const multiple = ["multi","checkboxes","chips"].includes(uiType);
+  const multiple = ["multi","checkboxes","chips","checkbox-multi"].includes(uiType);
   ensureSelectionStore(cat, multiple);
 
   if (multiple) {
@@ -364,7 +474,8 @@ function renderControl(cat, uiType, options){
     const sel = document.createElement("select");
     const placeholder = document.createElement("option");
     placeholder.value = "";
-    placeholder.textContent = "— select —";
+    // Use translated placeholder for selects
+    placeholder.textContent = CURRENT_UI_STRINGS.select_placeholder || "— select —";
     sel.appendChild(placeholder);
 
     for (const opt of options) {
@@ -406,9 +517,25 @@ function fillLanguageSelector(){
   // Build options from available langs, but put current ones (navigator preference) first
   const seen = new Set();
   const nav = detectNavigatorLangs();
-  const list = [...nav, ...STATE.availableLangs].filter(x => {
-    if (seen.has(x)) return false; seen.add(x); return true;
-  });
+  // Combine navigator languages with those detected in the data. Always include
+  // the available languages even if they are not present in the browser prefs.
+  const combined = [...nav, ...STATE.availableLangs];
+  const list = [];
+  for (const lang of combined) {
+    if (!lang) continue;
+    const lower = lang.toLowerCase();
+    if (seen.has(lower)) continue;
+    seen.add(lower);
+    list.push(lower);
+  }
+  // Ensure every language present in availableLangs appears at least once
+  for (const lang of STATE.availableLangs) {
+    const lower = lang.toLowerCase();
+    if (!seen.has(lower)) {
+      seen.add(lower);
+      list.push(lower);
+    }
+  }
   for (const lang of list) {
     const opt = document.createElement("option");
     opt.value = lang;
@@ -418,12 +545,15 @@ function fillLanguageSelector(){
   // pick the first of STATE.langs that exists; otherwise first in list
   const preferred = STATE.langs.find(l => list.includes(l)) || list[0] || "en";
   sel.value = preferred;
+  // Load UI translations for the preferred language
+  loadTranslationsUI(preferred);
   sel.addEventListener("change", () => {
     const chosen = sel.value;
     // update preference order: chosen first, then rest of current + 'en'
     const rest = STATE.langs.filter(l => l !== chosen);
     STATE.langs = [chosen, ...rest.filter((v,i,a)=>a.indexOf(v)===i), "en"];
-    renderForm(); // re-render with new language
+    // load translations and re-render form after they arrive
+    loadTranslationsUI(chosen);
   });
 }
 
@@ -445,7 +575,8 @@ async function bootstrap(){
   // Load UI map
   const uiRows = await loadCSV(UI_CSV).catch(() => []);
   for (const r of uiRows) {
-    const cat = (r.category || r.name || r.tag || "").toString().trim().toLowerCase();
+    // The column name can be 'category', 'tag_type', 'name' or 'tag'.
+    const cat = (r.category || r.tag_type || r.name || r.tag || "").toString().trim().toLowerCase();
     const ui = (r.ui || r.ui_type || r.type || "select").toString().trim().toLowerCase();
     if (cat) STATE.uiMap[cat] = ui;
   }
@@ -454,6 +585,15 @@ async function bootstrap(){
   for (const cat of CATEGORIES) {
     try {
       const rows = await loadCSV(`tags/all/${cat}.csv`);
+      // Promote display_* keys to language codes (e.g., display_de -> de)
+      for (const row of rows) {
+        for (const key of Object.keys(row)) {
+          if (key.toLowerCase().startsWith("display_")) {
+            const lang = key.slice(8).toLowerCase();
+            if (!row[lang]) row[lang] = row[key];
+          }
+        }
+      }
       STATE.data[cat] = rows;
     } catch (e) {
       console.warn(e);
@@ -467,18 +607,24 @@ async function bootstrap(){
   STATE.langs = detectNavigatorLangs();
 
   fillLanguageSelector();
+
+  // Load translation strings based on the preferred UI language
+  await loadTranslationsUI(STATE.langs[0] || "en");
+
   renderForm();
 
   // Copy button
   document.getElementById("copy-btn").addEventListener("click", async () => {
-    const text = document.getElementById("tags-text").value;
+    // Copy tags preceded by a dashed line separator
+    const tagsBlock = buildTagsBlock();
+    const text = tagsBlock ? ("----------\n" + tagsBlock) : "";
     const status = document.getElementById("copy-status");
     try {
       await navigator.clipboard.writeText(text);
-      status.textContent = "Copied!";
+      status.textContent = CURRENT_UI_STRINGS.copy_success || "Copied!";
       setTimeout(() => status.textContent = "", 1200);
     } catch {
-      status.textContent = "Press Ctrl/Cmd+C to copy.";
+      status.textContent = CURRENT_UI_STRINGS.copy_error || "Press Ctrl/Cmd+C to copy.";
       setTimeout(() => status.textContent = "", 2000);
     }
   });
@@ -503,23 +649,6 @@ async function bootstrap(){
     params.set("action", "TEMPLATE");
     if (title) params.set("text", title);
     if (details.trim()) params.set("details", details);
-    if (location) params.set("location", location);
-    params.set("ctz", "Europe/Berlin");
-    const url = "https://calendar.google.com/calendar/render?" + params.toString();
-    window.open(url, "_blank");
-  });
-}
-
-bootstrap();
-
-if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',()=>bootstrap());}else{setTimeout(()=>bootstrap(),0);}
-
-    (function(){
-      const isFile = location.protocol === 'file:';
-      const b = document.getElementById('file-warning');
-      if(isFile && b) b.style.display='block';
-    })();
-    </script>trim()) params.set("details", details);
     if (location) params.set("location", location);
     params.set("ctz", "Europe/Berlin");
     const url = "https://calendar.google.com/calendar/render?" + params.toString();
