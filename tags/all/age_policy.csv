@@ -1,0 +1,6 @@
+tag_type,tag,display_de,display_en,is-active
+age_policy,all-ages,Alle Altersgruppen,All Ages,TRUE
+age_policy,children-only,Nur Kinder,Children Only,TRUE
+age_policy,16-plus,Ab 16,16+,TRUE
+age_policy,18-plus,Ab 18,18+,TRUE
+age_policy,family-friendly,Familienfreundlich,Family Friendly,TRUE

@@ -1,0 +1,5 @@
+tag_type,tag,display_de,display_en,is-active
+price_type,free,Kostenlos,Free,TRUE
+price_type,donation,Spende,Donation,TRUE
+price_type,paid,Beitrag,Paid,TRUE
+price_type,sliding-scale,Gleitende Skala,Sliding Scale,TRUE
