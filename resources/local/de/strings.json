@@ -20,4 +20,12 @@
   "create_event_button": "Event erstellen",
   "clear_selections_button": "Auswahl löschen",
   "select_placeholder": "— auswählen —"
+  ,
+  "import_tags_label": "Tags importieren",
+  "import_tags_placeholder": "Tags hier einfügen (z. B. #lindyhop #workshop)",
+  "import_tags_button": "Tags importieren",
+  "import_warning_unknown_tag": "Unbekanntes Tag: {tag}"
+  ,
+  "all_button": "Alle",
+  "none_button": "Keine"
 }

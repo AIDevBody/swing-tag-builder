@@ -20,4 +20,12 @@
   "create_event_button": "Create event",
   "clear_selections_button": "Clear selections",
   "select_placeholder": "— select —"
+  ,
+  "import_tags_label": "Import tags",
+  "import_tags_placeholder": "Paste tags here (e.g. #lindyhop #workshop)",
+  "import_tags_button": "Import tags",
+  "import_warning_unknown_tag": "Unknown tag: {tag}"
+  ,
+  "all_button": "All",
+  "none_button": "None"
 }

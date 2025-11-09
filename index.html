@@ -50,6 +50,10 @@
       flex-wrap: wrap;
       margin-bottom: var(--gap);
     }
+    /* Push the clear‑selections button to the far right of the controls */
+    #clearSelections {
+      margin-left: auto;
+    }
     button, select, input, textarea {
       background: #1a2540;
       color: #eaf0ff;
@@ -76,14 +80,24 @@
       grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
       gap: var(--gap);
     }
-    .tag-group {
-      margin-bottom: var(--gap);
+    /* Styles for the tag selector table */
+    .tag-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: var(--gap);
     }
-    .tag-group label {
-      display: block;
-      margin-bottom: 4px;
+    .tag-table td {
+      vertical-align: top;
+      padding: 6px;
+    }
+    .tag-table .group-label {
       font-weight: 600;
       color: #bcd1ff;
+      padding-right: 8px;
+      white-space: nowrap;
+    }
+    .tag-table .actions button {
+      margin-right: 4px;
     }
     .selected-tags {
       margin-top: var(--gap);
@@ -102,6 +116,19 @@
       display: flex;
       align-items: center;
       gap: 8px;
+    }
+
+    /* Import section warning styles */
+    .import-warnings {
+      margin-top: var(--gap);
+    }
+    .import-warning {
+      background: #3a1b1f;
+      border: 1px solid #e54b4b;
+      color: #ffc6c6;
+      padding: 6px 10px;
+      border-radius: 8px;
+      margin-bottom: 4px;
     }
   </style>
 </head>
@@ -136,15 +163,27 @@
           <label id="descriptionLabel" for="description"></label>
           <textarea id="description" rows="3" placeholder=""></textarea>
         </div>
+        <div class="field selected-tags">
+          <label id="selectedTagsLabel" for="tagsOutput"></label>
+          <textarea id="tagsOutput" readonly></textarea>
+        </div>
+        <div class="field event-create">
+          <button id="createEvent">Create event</button>
+        </div>
       </div>
-      <div id="tagSelectors" class="row"></div>
-      <div class="selected-tags">
-        <label id="selectedTagsLabel" for="tagsOutput"></label>
-        <textarea id="tagsOutput" readonly></textarea>
+      <!-- Tag selectors will render into this table -->
+      <div id="tagSelectors"></div>
+    </section>
+    <!-- Import tags section -->
+    <section class="card">
+      <div class="field">
+        <label id="importTagsLabel" for="importInput">Import tags</label>
+        <textarea id="importInput" rows="2" placeholder=""></textarea>
       </div>
-      <div class="event-create" style="margin-top: var(--gap);">
-        <button id="createEvent">Create event</button>
+      <div style="display: flex; justify-content: flex-end;">
+        <button id="importButton">Import tags</button>
       </div>
+      <div id="importWarnings" class="import-warnings"></div>
     </section>
   </div>
 
@@ -161,6 +200,56 @@
   const state = {};
   // Constructed tag string that will be copied or inserted into events
   let tagsString = '';
+
+  // Save the current state and form values to localStorage
+  function saveStateToStorage() {
+    try {
+      const obj = { state: {}, fields: {} };
+      // Convert sets to arrays for serialization
+      for (const type in state) {
+        const val = state[type];
+        if (val instanceof Set) {
+          obj.state[type] = Array.from(val);
+        } else {
+          obj.state[type] = val;
+        }
+      }
+      obj.fields = {
+        title: document.getElementById('eventTitle').value,
+        location: document.getElementById('location').value,
+        description: document.getElementById('description').value
+      };
+      localStorage.setItem('tagBuilderState', JSON.stringify(obj));
+    } catch (err) {
+      console.warn('Failed to save state:', err);
+    }
+  }
+
+  // Load state and form values from localStorage
+  function loadStateFromStorage() {
+    try {
+      const raw = localStorage.getItem('tagBuilderState');
+      if (!raw) return;
+      const obj = JSON.parse(raw);
+      if (obj.state) {
+        for (const type in obj.state) {
+          const val = obj.state[type];
+          if (Array.isArray(val)) {
+            state[type] = new Set(val);
+          } else {
+            state[type] = val;
+          }
+        }
+      }
+      if (obj.fields) {
+        document.getElementById('eventTitle').value = obj.fields.title || '';
+        document.getElementById('location').value = obj.fields.location || '';
+        document.getElementById('description').value = obj.fields.description || '';
+      }
+    } catch (err) {
+      console.warn('Failed to load state:', err);
+    }
+  }
 
   // Fetch localisation strings for a given language code
   async function loadStrings(lang) {
@@ -296,27 +385,63 @@
     document.getElementById('copyTags').textContent = strings.copy_tags_button || 'Copy tags';
     document.getElementById('clearSelections').textContent = strings.clear_selections_button || 'Clear selections';
     document.getElementById('createEvent').textContent = strings.create_event_button || 'Create event';
+    // Import section labels
+    document.getElementById('importTagsLabel').textContent = strings.import_tags_label || 'Import tags';
+    document.getElementById('importInput').placeholder = strings.import_tags_placeholder || '#tag1 #tag2';
+    document.getElementById('importButton').textContent = strings.import_tags_button || 'Import tags';
   }
 
   // Render tag selectors for each type
   function renderTagSelectors() {
     const container = document.getElementById('tagSelectors');
     container.innerHTML = '';
-    const types = Object.keys(tagsByType);
-    types.sort();
+    const table = document.createElement('table');
+    table.className = 'tag-table';
+    const types = Object.keys(tagsByType).sort();
     types.forEach(type => {
       const items = tagsByType[type];
       if (!items || items.length === 0) return;
       const settings = typeSettings[type] || { ui_type: 'checkbox-multi', display: {} };
-      const group = document.createElement('div');
-      group.className = 'tag-group';
-      const label = document.createElement('label');
+      const tr = document.createElement('tr');
+      // Left cell: group label and per‑group buttons
+      const tdLabel = document.createElement('td');
+      tdLabel.className = 'group-label';
       const langName = settings.display[currentLang] || settings.display['en'] || type;
-      label.textContent = langName;
-      group.appendChild(label);
+      tdLabel.textContent = langName;
+      // If checkbox‑multi, provide All/None buttons; for dropdown provide only None
+      const actions = document.createElement('div');
+      actions.className = 'actions';
+      if (settings.ui_type !== 'dropdown-single') {
+        const allBtn = document.createElement('button');
+        allBtn.type = 'button';
+        allBtn.textContent = strings.all_button || 'All';
+        allBtn.addEventListener('click', () => {
+          state[type] = new Set(items.map(item => item.tag));
+          renderTagSelectors();
+          updateTagsOutput();
+        });
+        actions.appendChild(allBtn);
+      }
+      const noneBtn = document.createElement('button');
+      noneBtn.type = 'button';
+      noneBtn.textContent = strings.none_button || 'None';
+      noneBtn.addEventListener('click', () => {
+        if (settings.ui_type === 'dropdown-single') {
+          state[type] = '';
+        } else {
+          state[type] = new Set();
+        }
+        renderTagSelectors();
+        updateTagsOutput();
+      });
+      actions.appendChild(noneBtn);
+      tdLabel.appendChild(document.createElement('br'));
+      tdLabel.appendChild(actions);
+      tr.appendChild(tdLabel);
+      // Right cell: UI for selecting tags
+      const tdInput = document.createElement('td');
       if (settings.ui_type === 'dropdown-single') {
         const sel = document.createElement('select');
-        // Add placeholder option
         const placeholder = document.createElement('option');
         placeholder.value = '';
         placeholder.textContent = strings.select_placeholder || '— select —';
@@ -327,19 +452,18 @@
           opt.textContent = item[`display_${currentLang}`] || item[`display_en`] || item.tag;
           sel.appendChild(opt);
         });
-        // Set current value if any
         sel.value = state[type] || '';
         sel.addEventListener('change', () => {
           state[type] = sel.value;
           updateTagsOutput();
+          saveStateToStorage();
         });
-        group.appendChild(sel);
+        tdInput.appendChild(sel);
       } else {
-        // checkbox-multi
         if (!state[type] || !(state[type] instanceof Set)) state[type] = new Set();
         items.forEach(item => {
-          const wrapper = document.createElement('label');
-          wrapper.style.display = 'block';
+          const labelEl = document.createElement('label');
+          labelEl.style.display = 'block';
           const input = document.createElement('input');
           input.type = 'checkbox';
           input.value = item.tag;
@@ -351,16 +475,19 @@
               state[type].delete(item.tag);
             }
             updateTagsOutput();
+            saveStateToStorage();
           });
-          wrapper.appendChild(input);
+          labelEl.appendChild(input);
           const span = document.createElement('span');
           span.textContent = ' ' + (item[`display_${currentLang}`] || item[`display_en`] || item.tag);
-          wrapper.appendChild(span);
-          group.appendChild(wrapper);
+          labelEl.appendChild(span);
+          tdInput.appendChild(labelEl);
         });
       }
-      container.appendChild(group);
+      tr.appendChild(tdInput);
+      table.appendChild(tr);
     });
+    container.appendChild(table);
   }
 
   // Build the tag string and update the output textarea
@@ -386,6 +513,8 @@
       tagsString = '';
     }
     document.getElementById('tagsOutput').value = tagsString;
+    // Save updated state to storage
+    saveStateToStorage();
   }
 
   // Copy the current tag string to clipboard
@@ -419,6 +548,7 @@
     document.getElementById('description').value = '';
     renderTagSelectors();
     updateTagsOutput();
+    saveStateToStorage();
   }
 
   // Build a Google Calendar event creation link and open it
@@ -448,6 +578,62 @@
     document.getElementById('copyTags').addEventListener('click', copyTagsToClipboard);
     document.getElementById('clearSelections').addEventListener('click', clearAllSelections);
     document.getElementById('createEvent').addEventListener('click', createEvent);
+    // Save field changes to storage
+    ['eventTitle','location','description'].forEach(id => {
+      const el = document.getElementById(id);
+      el.addEventListener('input', () => {
+        saveStateToStorage();
+      });
+    });
+    // Import tags handler
+    document.getElementById('importButton').addEventListener('click', importTags);
+  }
+
+  // Import tags from the import textarea and update the state
+  function importTags() {
+    const input = document.getElementById('importInput');
+    const warnings = document.getElementById('importWarnings');
+    warnings.innerHTML = '';
+    const text = input.value || '';
+    const foundTags = text.match(/#([^\s#]+)/g) || [];
+    const unknown = [];
+    // Create a mapping from tag value to its types for quick lookup
+    const tagToTypes = {};
+    for (const type in tagsByType) {
+      tagsByType[type].forEach(item => {
+        if (!tagToTypes[item.tag]) tagToTypes[item.tag] = [];
+        tagToTypes[item.tag].push(type);
+      });
+    }
+    foundTags.forEach(raw => {
+      const tagVal = raw.slice(1); // remove '#'
+      const types = tagToTypes[tagVal];
+      if (!types || types.length === 0) {
+        unknown.push(tagVal);
+        return;
+      }
+      types.forEach(type => {
+        const settings = typeSettings[type] || {};
+        if (settings.ui_type === 'dropdown-single') {
+          state[type] = tagVal;
+        } else {
+          if (!state[type] || !(state[type] instanceof Set)) state[type] = new Set();
+          state[type].add(tagVal);
+        }
+      });
+    });
+    // Show warnings for unknown tags
+    if (unknown.length > 0) {
+      unknown.forEach(tag => {
+        const div = document.createElement('div');
+        div.className = 'import-warning';
+        div.textContent = (strings.import_warning_unknown_tag || 'Unknown tag: {tag}').replace('{tag}', tag);
+        warnings.appendChild(div);
+      });
+    }
+    renderTagSelectors();
+    updateTagsOutput();
+    saveStateToStorage();
   }
 
   // Initialise the page
@@ -456,6 +642,8 @@
     await loadTags();
     await loadStrings(currentLang);
     initLanguages();
+    // Restore saved state before rendering selectors so values appear selected
+    loadStateFromStorage();
     updateStaticText();
     renderTagSelectors();
     updateTagsOutput();
