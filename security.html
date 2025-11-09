@@ -106,7 +106,7 @@
         <label id="securityLangLabel" for="lang">Language:</label>
         <select id="lang"></select>
       </div>
-      <button id="printButtonTop">Print / PDF</button>
+      <button id="printButtonTop">Print</button>
     </header>
     <div class="card">
       <!-- English policy content -->
@@ -279,7 +279,7 @@
     </div>
     <div style="display: flex; justify-content: flex-start; gap: 8px; margin-top: 12px;">
       <button id="backButtonBottom" class="floating-btn">Back</button>
-      <button id="printButtonBottom">Print / PDF</button>
+      <button id="printButtonBottom">Print</button>
     </div>
   </div>
 
@@ -347,7 +347,8 @@
     const backButtons = document.querySelectorAll('#backButtonTop,#backButtonBottom');
     backButtons.forEach(btn => { btn.textContent = strings.back_button || 'Back'; });
     const printButtons = document.querySelectorAll('#printButtonTop,#printButtonBottom');
-    printButtons.forEach(btn => { btn.textContent = strings.print_button || 'Print / PDF'; });
+    // Use provided translation or fallback to "Print" only (no PDF mention)
+    printButtons.forEach(btn => { btn.textContent = strings.print_button || 'Print'; });
     updateContentLanguage();
   }
 
@@ -361,9 +362,37 @@
     const printButtons = document.querySelectorAll('#printButtonTop,#printButtonBottom');
     printButtons.forEach(btn => {
       btn.addEventListener('click', () => {
-        window.print();
+        printArticle();
       });
     });
+  }
+
+  /**
+   * Opens a new window containing only the currently visible article
+   * and triggers the print dialog. This ensures only the card content
+   * (the policy) is printed rather than the whole page.
+   */
+  function printArticle() {
+    const card = document.querySelector('.card');
+    if (!card) return;
+    let article;
+    if (currentLang === 'de') {
+      article = document.getElementById('policyContentDe');
+    } else {
+      article = document.getElementById('policyContentEn');
+    }
+    if (!article) return;
+    const printWindow = window.open('', '', 'width=800,height=600');
+    printWindow.document.write('<!doctype html><html><head><meta charset="utf-8"><title>' + (currentLang === 'de' ? 'Drucken' : 'Print') + '</title>');
+    // basic styles for print
+    printWindow.document.write('<style>body{font-family:system-ui, sans-serif; padding:20px; color:#000;} h1,h2,h3,h4{color:#000;} ul{margin-left:20px;} code{background:#f0f0f0; padding:2px 4px;}</style>');
+    printWindow.document.write('</head><body>');
+    printWindow.document.write(article.outerHTML);
+    printWindow.document.write('</body></html>');
+    printWindow.document.close();
+    printWindow.focus();
+    printWindow.print();
+    printWindow.close();
   }
 
   (async () => {

@@ -105,7 +105,7 @@
         <label id="quickLangLabel" for="lang">Language:</label>
         <select id="lang"></select>
       </div>
-      <button id="quickPrintTop">Print / PDF</button>
+      <button id="quickPrintTop">Print</button>
     </header>
     <div class="card">
       <!-- English quick model content -->
@@ -324,7 +324,7 @@
     </div>
     <div style="display: flex; justify-content: flex-start; gap: 8px; margin-top: 12px;">
       <button id="quickBackBottom" class="floating-btn">Back</button>
-      <button id="quickPrintBottom">Print / PDF</button>
+      <button id="quickPrintBottom">Print</button>
     </div>
   </div>
 
@@ -391,7 +391,8 @@
     const backButtons = document.querySelectorAll('#quickBackTop,#quickBackBottom');
     backButtons.forEach(btn => { btn.textContent = strings.back_button || 'Back'; });
     const printButtons = document.querySelectorAll('#quickPrintTop,#quickPrintBottom');
-    printButtons.forEach(btn => { btn.textContent = strings.print_button || 'Print / PDF'; });
+    // Use provided translation or fallback to "Print"
+    printButtons.forEach(btn => { btn.textContent = strings.print_button || 'Print'; });
     updateContentLanguage();
   }
 
@@ -405,9 +406,38 @@
     const printButtons = document.querySelectorAll('#quickPrintTop,#quickPrintBottom');
     printButtons.forEach(btn => {
       btn.addEventListener('click', () => {
-        window.print();
+        printArticle();
       });
     });
+  }
+
+  /**
+   * Prints only the visible quick model article by opening it in a new window.
+   * This ensures that only the explanatory content is printed rather than the entire page.
+   */
+  function printArticle() {
+    const card = document.querySelector('.card');
+    if (!card) return;
+    let article;
+    // Choose article based on current language
+    if (currentLang === 'de') {
+      article = document.getElementById('quickContentDe');
+    } else {
+      article = document.getElementById('quickContentEn');
+    }
+    if (!article) return;
+    const printWindow = window.open('', '', 'width=800,height=600');
+    // Set appropriate title for printing (Drucken vs Print)
+    printWindow.document.write('<!doctype html><html><head><meta charset="utf-8"><title>' + (currentLang === 'de' ? 'Drucken' : 'Print') + '</title>');
+    // Add basic print styles for readability
+    printWindow.document.write('<style>body{font-family:system-ui, sans-serif; padding:20px; color:#000;} h1,h2,h3,h4{color:#000;} ul{margin-left:20px;} code{background:#f0f0f0; padding:2px 4px;}</style>');
+    printWindow.document.write('</head><body>');
+    printWindow.document.write(article.outerHTML);
+    printWindow.document.write('</body></html>');
+    printWindow.document.close();
+    printWindow.focus();
+    printWindow.print();
+    printWindow.close();
   }
 
   (async () => {
