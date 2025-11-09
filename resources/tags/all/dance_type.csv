@@ -1,0 +1,16 @@
+tag_type,tag,display_de,display_en,is-active
+dance_type,lindy-hop,Lindy Hop,Lindy Hop,TRUE
+dance_type,balboa,Balboa,Balboa,TRUE
+dance_type,bal-swing,Bal-Swing,Bal Swing,TRUE
+dance_type,collegiate-shag,Collegiate Shag,Collegiate Shag,TRUE
+dance_type,st-louis-shag,St. Louis Shag,St Louis Shag,TRUE
+dance_type,charleston,Charleston,Charleston,TRUE
+dance_type,solo-jazz,Solo Jazz,Solo Jazz,TRUE
+dance_type,jazz-roots,Jazz Roots,Jazz Roots,TRUE
+dance_type,east-coast-swing,East Coast Swing,East Coast Swing,TRUE
+dance_type,west-coast-swing,West Coast Swing,West Coast Swing,TRUE
+dance_type,boogie-woogie,Boogie Woogie,Boogie Woogie,TRUE
+dance_type,blues,Blues,Blues,TRUE
+dance_type,shag,Shag,Shag,TRUE
+dance_type,jitterbug,Jitterbug,Jitterbug,TRUE
+dance_type,rock-n-roll,Rock ’n’ Roll,Rock ’n’ Roll,TRUE

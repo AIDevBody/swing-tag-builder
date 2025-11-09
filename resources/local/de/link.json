@@ -1,0 +1,13 @@
+{
+  "google_doc_en": "https://support.google.com/calendar/answer/37100",
+  "google_doc_de": "https://support.google.com/calendar/answer/37100?hl=de",
+  "google_notifications_doc_en": "https://support.google.com/calendar/answer/37242",
+  "google_notifications_doc_de": "https://support.google.com/calendar/answer/37242?hl=de",
+  "apple_doc_en": "https://support.apple.com/en-us/102301",
+  "apple_doc_de": "https://support.apple.com/de-de/102301",
+  "apple_autorefresh_doc": "https://help.hospitable.com/en/articles/4605516-how-can-i-add-the-ical-feed-to-the-calendar-on-my-device",
+  "google_calendar_video": "https://www.youtube.com/embed/6WcMiniv2_4",
+  "apple_calendar_video": "https://www.youtube.com/embed/0X4_xg1gB7U",
+  "google_icon": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a5/Google_Calendar_icon_(2020).svg/512px-Google_Calendar_icon_(2020).svg.png",
+  "apple_icon": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5e/Apple_Calendar_(iOS).svg/512px-Apple_Calendar_(iOS).svg.png"
+}

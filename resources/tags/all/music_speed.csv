@@ -1,0 +1,9 @@
+tag_type,tag,display_de,display_en,is-active
+music_speed,slow,Langsam,Slow,TRUE
+music_speed,medium,Mittel,Medium,TRUE
+music_speed,fast,Schnell,Fast,TRUE
+music_speed,very-fast,Sehr schnell,Very Fast,TRUE
+music_speed,bpm-80-110,BPM 80–110,BPM 80–110,TRUE
+music_speed,bpm-110-140,BPM 110–140,BPM 110–140,TRUE
+music_speed,bpm-140-170,BPM 140–170,BPM 140–170,TRUE
+music_speed,bpm-170-plus,BPM 170+,BPM 170+,TRUE

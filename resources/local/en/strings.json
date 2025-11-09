@@ -1,0 +1,23 @@
+{
+  "title": "Swing Tag Builder",
+  "header": "Swing Tag Builder",
+  "language_label": "Language:",
+  "howto_heading": "Instructions",
+  "howto_lines": [
+    "Browse each tag category and select the options using the dropdowns.",
+    "Your selections will be mirrored in the tags field below. Once your event is ready, copy the tags and paste them under your event description."
+  ],
+  "selected_tags_label": "Selected Tags",
+  "copy_tags_button": "Copy tags",
+  "copy_success": "Copied!",
+  "copy_error": "Press Ctrl/Cmd+C to copy.",
+  "event_title_label": "Event title",
+  "event_title_placeholder": "e.g. Beginner Lindy Hop class",
+  "location_label": "Location",
+  "location_placeholder": "e.g. Berlin, Germany",
+  "description_label": "Description",
+  "description_placeholder": "Optional notes.",
+  "create_event_button": "Create event",
+  "clear_selections_button": "Clear selections",
+  "select_placeholder": "— select —"
+}

@@ -1,0 +1,6 @@
+tag_type,tag,display_de,display_en,is-active
+registration,drop-in,Ohne Anmeldung,Drop-in,TRUE
+registration,registration-required,Anmeldung erforderlich,Registration Required,TRUE
+registration,partner-required,Partner*in erforderlich,Partner Required,TRUE
+registration,partner-optional,Partner*in optional,Partner Optional,TRUE
+registration,membership-only,Nur Mitglieder,Membership Only,TRUE

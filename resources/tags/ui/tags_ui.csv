@@ -1,0 +1,14 @@
+tag_type,ui_type,display_en,display_de
+location,dropdown-single,Location,Ort
+dance_type,checkbox-multi,Dance Type,Tanzstil
+event_type,checkbox-multi,Event Type,Veranstaltungstyp
+level,checkbox-multi,Level,Level
+role,checkbox-multi,Role,Rolle
+music_speed,checkbox-multi,Music Speed,Musikgeschwindigkeit
+music_source,checkbox-multi,Music Source,Musikquelle
+language,checkbox-multi,Language,Sprache
+venue_type,checkbox-multi,Venue Type,Veranstaltungsort
+registration,checkbox-multi,Registration,Anmeldung
+price_type,checkbox-multi,Price Type,Preisart
+age_policy,checkbox-multi,Age Policy,Altersbeschränkung
+footwear,checkbox-multi,Footwear,Schuhwerk
