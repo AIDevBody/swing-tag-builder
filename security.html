@@ -1,0 +1,251 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Security Policy</title>
+  <!--
+    This page presents the Calendar Editors security & onboarding policy.
+    It reuses the same dark theme as other pages and supports basic localisation
+    for the page title and the back button. The policy text is provided
+    statically below.
+  -->
+  <style>
+    :root {
+      --gap: 12px;
+      --pad: 14px;
+      --radius: 12px;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+    }
+    body {
+      margin: 0;
+      padding: 20px;
+      background: #0b0f16;
+      color: #eaf0ff;
+    }
+    a { color: #9bcbff; text-decoration: none; }
+    .container {
+      max-width: 960px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    header {
+      margin-bottom: 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: var(--gap);
+    }
+    h1 {
+      margin: 0;
+      font-size: 24px;
+      color: #d0dbff;
+    }
+    .lang-container {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .card {
+      background: #121827;
+      border: 1px solid #1f2a44;
+      border-radius: var(--radius);
+      padding: var(--pad);
+      margin-bottom: var(--gap);
+    }
+    h2, h3 {
+      margin-top: 1em;
+      margin-bottom: 0.5em;
+      color: #d0dbff;
+    }
+    p {
+      margin-top: 0;
+      margin-bottom: 1em;
+      line-height: 1.4;
+    }
+    ul {
+      margin-top: 0;
+      margin-bottom: 1em;
+      padding-left: 20px;
+    }
+    li { margin-bottom: 0.5em; }
+    button {
+      background: #1a2540;
+      color: #eaf0ff;
+      border: 1px solid #2a3f66;
+      border-radius: 10px;
+      padding: 8px 12px;
+      font-size: 14px;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #2a3f66;
+      border-color: #3c548a;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1 id="securityPageTitle">Security policy</h1>
+      <div class="lang-container">
+        <label id="securityLangLabel" for="lang">Language:</label>
+        <select id="lang"></select>
+      </div>
+    </header>
+    <div class="card">
+      <article id="policyContent">
+        <h1>Calendar Editors — Security & Onboarding Policy</h1>
+        <p>This document defines how editors can safely use the calendar system. It is maintained by a single maintainer for the good of the community. There is no organisation behind it, but everyone who participates must follow these rules and act responsibly.</p>
+
+        <h2>1. Summary</h2>
+        <p>Editor access allows people to create, modify, and publish events on shared calendars that subscribers rely on. Editors can change event details, add descriptions and links, and trigger notifications. Misuse or compromised accounts can create security and trust problems for everyone.</p>
+        <p>Every new editor must be introduced by an existing editor, and only Gmail accounts are accepted for editing access. Editors are accountable for their actions, and their sponsors share responsibility for anyone they introduce.</p>
+
+        <h2>2. Key Risks (What Can Go Wrong)</h2>
+
+        <h3>2.1 Phishing and malicious link propagation</h3>
+        <p>An editor can publish events containing links in the <code>DESCRIPTION</code> or <code>LOCATION</code> fields. Malicious links could lead to phishing, malware, or credential theft. Subscribers may click these links assuming they are safe.</p>
+
+        <h3>2.2 Impersonation and misinformation</h3>
+        <p>Malicious editors could impersonate legitimate organisers, spread false information, or manipulate event details to mislead subscribers.</p>
+
+        <h3>2.3 Data exposure</h3>
+        <p>Event descriptions or links might be used to collect subscriber data or share it publicly.</p>
+
+        <h3>2.4 Non‑Gmail account risk</h3>
+        <p>Only Gmail accounts are accepted because Gmail accounts are automatically integrated with Google’s security and audit mechanisms. Non‑Gmail accounts can:</p>
+        <ul>
+          <li>Lack proper identity verification and recovery options.</li>
+          <li>Bypass Google’s security policies, 2‑Step Verification, and login tracking.</li>
+          <li>Be impersonated more easily, as they might not support full account identity validation.</li>
+        </ul>
+        <p>For these reasons, any request from a non‑Gmail address will be denied.</p>
+
+        <h2>3. Onboarding Rule: Sponsor‑Based Introductions</h2>
+        <p>Every new editor must be introduced and sponsored by an existing editor. The sponsor:</p>
+        <ul>
+          <li>Confirms the new editor’s identity and Gmail address.</li>
+          <li>Ensures the new editor understands the security risks and acceptable use.</li>
+          <li>Sends the new editor’s information up the chain to their own sponsor, until it reaches the maintainer who manually adds new editors to the system.</li>
+        </ul>
+        <p>When sending the new editor’s information, the sponsor must include:</p>
+        <ul>
+          <li>New editor’s full name</li>
+          <li>Gmail address</li>
+          <li>Reason for joining (why they need to edit events)</li>
+          <li>The calendars they will edit</li>
+          <li>Confirmation that they have read this policy and understand the responsibilities</li>
+        </ul>
+        <p>The maintainer manually reviews and adds the new editor to the system.</p>
+
+        <h2>4. Technical &amp; Procedural Controls</h2>
+
+        <h3>4.1 Notifications and link handling</h3>
+        <ul>
+          <li>Editors must avoid adding untrusted or suspicious links.</li>
+          <li>Descriptions should never contain login forms or links asking for personal information.</li>
+        </ul>
+
+        <h3>4.2 Logging and accountability</h3>
+        <ul>
+          <li>The system automatically tracks who edits what and when.</li>
+          <li>Each edit (creation, update, deletion) is logged with the editor’s Gmail identity.</li>
+          <li>If misuse occurs, this tracking allows identification of the responsible account.</li>
+        </ul>
+
+        <h3>4.3 Least privilege, access review, and reporting</h3>
+        <ul>
+          <li>Only grant access when needed.</li>
+          <li>Remove access for inactive or untrusted editors.</li>
+          <li>Each sponsor is responsible for reporting any misuse they become aware of and ensuring that the person responsible is removed from the system.</li>
+        </ul>
+
+        <h3>4.4 Responsibility and consequences</h3>
+        <p>Each editor is personally responsible for what they post. Sponsors are responsible for verifying that the people they introduce act in good faith. If a person misuses their access:</p>
+        <ul>
+          <li>Their access will be revoked.</li>
+          <li>They will be held personally responsible for any damage or abuse caused.</li>
+          <li>Information about the misuse will be retained and, if necessary, provided to authorities.</li>
+        </ul>
+
+        <h2>5. Accountability</h2>
+        <ul>
+          <li>Editors and sponsors are jointly responsible for their actions and the actions of anyone they introduce.</li>
+          <li>The maintainer may revoke access at any time in case of misuse or suspicion.</li>
+          <li>Serious misuse may lead to reporting to authorities.</li>
+        </ul>
+      </article>
+    </div>
+    <div style="display: flex; justify-content: flex-start; margin-top: 12px;">
+      <button id="backButton">Back</button>
+    </div>
+  </div>
+
+  <script>
+  // Basic localisation for the security page
+  let currentLang = 'en';
+  let strings = {};
+  const languages = ['en','de'];
+
+  function loadSavedLang() {
+    try {
+      const saved = localStorage.getItem('editorGuideLang');
+      if (saved) currentLang = saved;
+    } catch (err) {}
+  }
+
+  async function loadStrings(lang) {
+    try {
+      const res = await fetch(`resources/local/${lang}/strings.json`, {cache:'no-store'});
+      if (!res.ok) throw new Error('failed');
+      strings = await res.json();
+    } catch (err) {
+      console.warn('Could not load strings for', lang);
+      if (lang !== 'en') {
+        await loadStrings('en');
+      }
+    }
+  }
+
+  function initLanguages() {
+    const sel = document.getElementById('lang');
+    sel.innerHTML = '';
+    languages.forEach(code => {
+      const opt = document.createElement('option');
+      opt.value = code;
+      opt.textContent = code;
+      sel.appendChild(opt);
+    });
+    sel.value = currentLang;
+    sel.addEventListener('change', async () => {
+      currentLang = sel.value;
+      try { localStorage.setItem('editorGuideLang', currentLang); } catch (err) {}
+      await loadStrings(currentLang);
+      updateText();
+    });
+  }
+
+  function updateText() {
+    document.getElementById('securityPageTitle').textContent = strings.security_page_title || 'Calendar Editors — Security & Onboarding';
+    document.getElementById('securityLangLabel').textContent = strings.language_label || 'Language:';
+    document.getElementById('backButton').textContent = strings.back_button || 'Back';
+  }
+
+  function attachHandlers() {
+    document.getElementById('backButton').addEventListener('click', () => {
+      window.location.href = 'index.html';
+    });
+  }
+
+  (async () => {
+    loadSavedLang();
+    await loadStrings(currentLang);
+    initLanguages();
+    updateText();
+    attachHandlers();
+  })();
+  </script>
+</body>
+</html>

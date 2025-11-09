@@ -3,17 +3,13 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Swing Tag Builder</title>
+  <title>Guide</title>
   <!--
-    This page lets event managers compose a list of hashtags for their Google
-    Calendar events. It reuses the same look and feel and tag definitions as
-    the Swing calendar feed builder. Tags are loaded from the CSV files under
-    the resources/tags directory. A line of dashes is added above the tag list
-    when copying or inserting into an event description. A button generates
-    a Google Calendar event creation link prefilled with the event title,
-    description, location and selected tags. All visible text is localised
-    using JSON files located in resources/local/[lang]/strings.json. The page
-    automatically adapts to the selected language in the dropdown.
+    This is the main guide page for calendar editors. It introduces
+    the security policy, the tag generator, the onboarding process
+    for new editors, and an overview of how the tag‑based feed works.
+    The page uses the same dark theme and localisation system as
+    the tag builder, with strings defined in resources/local/[lang]/strings.json.
   -->
   <style>
     :root {
@@ -28,100 +24,14 @@
       background: #0b0f16;
       color: #eaf0ff;
     }
-    a { color: #9bcbff; }
+    a { color: #9bcbff; text-decoration: none; }
     .container {
       max-width: 960px;
       margin-left: auto;
       margin-right: auto;
     }
     header {
-      margin-bottom: 22px;
-    }
-    .card {
-      background: #121827;
-      border: 1px solid #1f2a44;
-      border-radius: var(--radius);
-      padding: var(--pad);
-      margin-bottom: var(--gap);
-    }
-    .controls {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-      margin-bottom: var(--gap);
-    }
-    /* Push the clear‑selections button to the far right of the controls */
-    #clearSelections {
-      margin-left: auto;
-    }
-    button, select, input, textarea {
-      background: #1a2540;
-      color: #eaf0ff;
-      border: 1px solid #2a3f66;
-      border-radius: 10px;
-      padding: 8px 10px;
-      font-size: 14px;
-    }
-    button:hover {
-      background: #2a3f66;
-      border-color: #3c548a;
-    }
-    /* Make inputs and textareas span the full width */
-    input[type="text"], textarea {
-      width: 100%;
-      box-sizing: border-box;
-      resize: vertical;
-    }
-    .field {
-      margin-bottom: var(--gap);
-    }
-    .row {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-      gap: var(--gap);
-    }
-    /* Styles for the tag selector table */
-    .tag-table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: var(--gap);
-    }
-    .tag-table td {
-      vertical-align: top;
-      padding: 6px;
-    }
-    .tag-table .group-label {
-      font-weight: 600;
-      color: #bcd1ff;
-      padding-right: 8px;
-      white-space: nowrap;
-    }
-    .tag-table .actions {
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-    }
-    .tag-table tr:not(:last-child) {
-      border-bottom: 1px solid #1f2a44;
-    }
-    .selected-tags {
-      margin-top: var(--gap);
-    }
-    .selected-tags textarea {
-      height: 60px;
-    }
-
-    /* Selected actions (copy and create buttons) under the tag list */
-    .selected-actions {
-      display: flex;
-      flex-direction: column;
-      align-items: flex-end;
-      gap: 8px;
-      margin-top: var(--gap);
-    }
-
-    .icon {
-      margin-right: 6px;
+      margin-bottom: 24px;
     }
     .title-bar {
       display: flex;
@@ -135,18 +45,47 @@
       align-items: center;
       gap: 8px;
     }
-
-    /* Import section warning styles */
-    .import-warnings {
-      margin-top: var(--gap);
+    .card {
+      background: #121827;
+      border: 1px solid #1f2a44;
+      border-radius: var(--radius);
+      padding: var(--pad);
+      margin-bottom: var(--gap);
+      position: relative;
     }
-    .import-warning {
-      background: #3a1b1f;
-      border: 1px solid #e54b4b;
-      color: #ffc6c6;
-      padding: 6px 10px;
-      border-radius: 8px;
-      margin-bottom: 4px;
+    /* Special styling for security section */
+    .card.security {
+      border-color: #e54b4b;
+    }
+    h2 {
+      margin-top: 0;
+      margin-bottom: 8px;
+      font-size: 20px;
+      font-weight: 600;
+      color: #d0dbff;
+    }
+    p {
+      margin-top: 0;
+      margin-bottom: 14px;
+      line-height: 1.4;
+    }
+    button {
+      background: #1a2540;
+      color: #eaf0ff;
+      border: 1px solid #2a3f66;
+      border-radius: 10px;
+      padding: 8px 12px;
+      font-size: 14px;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #2a3f66;
+      border-color: #3c548a;
+    }
+    .card button {
+      position: absolute;
+      bottom: var(--pad);
+      right: var(--pad);
     }
   </style>
 </head>
@@ -154,222 +93,71 @@
   <div class="container">
     <header>
       <div class="title-bar">
-        <h1 id="title">Swing Tag Builder</h1>
+        <h1 id="mainTitle">Swing Calendar Editors Guide</h1>
         <div class="lang-container">
-          <label id="langLabel" for="lang">Language:</label>
+          <label id="mainLangLabel" for="lang">Language:</label>
           <select id="lang"></select>
         </div>
       </div>
-      <p id="intro" class="muted"></p>
     </header>
-
-    <section class="card">
-      <div class="controls">
-        <button id="clearSelections">Clear selections</button>
-      </div>
-      <div class="event-fields">
-        <div class="field">
-          <label id="eventTitleLabel" for="eventTitle"></label>
-          <input id="eventTitle" type="text" placeholder="" />
-        </div>
-        <div class="field">
-          <label id="locationLabel" for="location"></label>
-          <input id="location" type="text" placeholder="" />
-        </div>
-        <div class="field">
-          <label id="descriptionLabel" for="description"></label>
-          <textarea id="description" rows="3" placeholder=""></textarea>
-        </div>
-        <div class="field selected-tags">
-          <label id="selectedTagsLabel" for="tagsOutput"></label>
-          <textarea id="tagsOutput" readonly></textarea>
-          <div class="selected-actions">
-            <button id="copyTags"><span class="icon">📋</span> <span class="btn-text"></span></button>
-            <button id="createEvent"><span class="icon">📅</span> <span class="btn-text"></span></button>
-          </div>
-        </div>
-      </div>
-      <!-- Tag selectors will render into this table -->
-      <div id="tagSelectors"></div>
+    <!-- Security section -->
+    <section id="securitySection" class="card security">
+      <h2 id="securityTitle"></h2>
+      <p id="securityText"></p>
+      <button id="securityButton"></button>
     </section>
-    <!-- Import tags section -->
-    <section class="card">
-      <div class="field">
-        <label id="importTagsLabel" for="importInput">Import tags</label>
-        <textarea id="importInput" rows="2" placeholder=""></textarea>
-      </div>
-      <div style="display: flex; justify-content: flex-end;">
-        <button id="importButton">Import tags</button>
-      </div>
-      <div id="importWarnings" class="import-warnings"></div>
+    <!-- Tag generator section -->
+    <section id="tagSection" class="card">
+      <h2 id="tagTitle"></h2>
+      <p id="tagText"></p>
+      <button id="tagButton"></button>
+    </section>
+    <!-- Editor onboarding section -->
+    <section id="editorSection" class="card">
+      <h2 id="editorTitle"></h2>
+      <p id="editorText"></p>
+      <button id="downloadAgreementButton"></button>
+    </section>
+    <!-- System overview section -->
+    <section id="systemSection" class="card">
+      <h2 id="systemTitle"></h2>
+      <p id="systemText"></p>
+      <button id="systemButton"></button>
     </section>
   </div>
 
   <script>
-  // Global state for languages, tags and selections
-  let languages = ['en', 'de'];
+  // Localisation and navigation for the guide page
+  let languages = ['en','de'];
   let currentLang = 'en';
   let strings = {};
-  // Holds UI info (ui_type, display names) per tag type
-  const typeSettings = {};
-  // Holds arrays of tag objects per type
-  const tagsByType = {};
-  // Holds selected tag(s) per type. For checkbox-multi types this is a Set, for dropdown-single it's a string
-  const state = {};
-  // Constructed tag string that will be copied or inserted into events
-  let tagsString = '';
 
-  // Save the current state and form values to localStorage
-  function saveStateToStorage() {
+  function loadSavedLang() {
     try {
-      const obj = { state: {}, fields: {} };
-      // Convert sets to arrays for serialization
-      for (const type in state) {
-        const val = state[type];
-        if (val instanceof Set) {
-          obj.state[type] = Array.from(val);
-        } else {
-          obj.state[type] = val;
-        }
-      }
-      obj.fields = {
-        title: document.getElementById('eventTitle').value,
-        location: document.getElementById('location').value,
-        description: document.getElementById('description').value
-      };
-      localStorage.setItem('tagBuilderState', JSON.stringify(obj));
-    } catch (err) {
-      console.warn('Failed to save state:', err);
-    }
+      const saved = localStorage.getItem('editorGuideLang');
+      if (saved) currentLang = saved;
+    } catch (err) {}
   }
 
-  // Load state and form values from localStorage
-  function loadStateFromStorage() {
+  function saveLang() {
     try {
-      const raw = localStorage.getItem('tagBuilderState');
-      if (!raw) return;
-      const obj = JSON.parse(raw);
-      if (obj.state) {
-        for (const type in obj.state) {
-          const val = obj.state[type];
-          if (Array.isArray(val)) {
-            state[type] = new Set(val);
-          } else {
-            state[type] = val;
-          }
-        }
-      }
-      if (obj.fields) {
-        document.getElementById('eventTitle').value = obj.fields.title || '';
-        document.getElementById('location').value = obj.fields.location || '';
-        document.getElementById('description').value = obj.fields.description || '';
-      }
-    } catch (err) {
-      console.warn('Failed to load state:', err);
-    }
+      localStorage.setItem('editorGuideLang', currentLang);
+    } catch (err) {}
   }
 
-  // Fetch localisation strings for a given language code
   async function loadStrings(lang) {
     try {
-      const res = await fetch(`resources/local/${lang}/strings.json`, {cache: 'no-store'});
+      const res = await fetch(`resources/local/${lang}/strings.json`, {cache:'no-store'});
       if (!res.ok) throw new Error('Failed to load strings');
       strings = await res.json();
     } catch (err) {
       console.warn('Could not load localisation for', lang, err);
       if (lang !== 'en') {
-        // fallback to English
         await loadStrings('en');
       }
     }
   }
 
-  // Load tag UI definitions (typeSettings) from tags_ui.csv
-  async function loadTypeSettings() {
-    try {
-      const res = await fetch('resources/tags/ui/tags_ui.csv', {cache: 'no-store'});
-      if (!res.ok) throw new Error('Failed to load tag UI definitions');
-      const text = await res.text();
-      const lines = text.trim().split(/\r?\n/);
-      if (lines.length === 0) return;
-      const header = lines[0].split(',');
-      const idxType = header.indexOf('tag_type');
-      const idxUi = header.indexOf('ui_type');
-      const langCols = {};
-      header.forEach((h, i) => {
-        const m = h.match(/^display_(.+)$/);
-        if (m) langCols[m[1]] = i;
-      });
-      for (let i = 1; i < lines.length; i++) {
-        const parts = lines[i].split(',');
-        const type = parts[idxType];
-        if (!type) continue;
-        const uiType = parts[idxUi] || 'checkbox-multi';
-        const obj = { ui_type: uiType, display: {} };
-        for (const lang in langCols) {
-          obj.display[lang] = parts[langCols[lang]] || type;
-        }
-        typeSettings[type] = obj;
-      }
-    } catch (err) {
-      console.error(err);
-    }
-  }
-
-  // Load all tag data from the CSV files
-  async function loadTags() {
-    // Determine which types to load based on typeSettings or fallback list
-    const defaultTypes = [
-      'location','dance_type','event_type','level','role','music_speed','music_source','language','venue_type','registration','price_type','age_policy','footwear'
-    ];
-    const types = Object.keys(typeSettings);
-    const toLoad = types.length ? types : defaultTypes;
-    const langSet = new Set(languages);
-    for (const type of toLoad) {
-      try {
-        const res = await fetch(`resources/tags/all/${type}.csv`, {cache: 'no-store'});
-        if (!res.ok) {
-          console.warn('Could not load tags for', type);
-          continue;
-        }
-        const csvText = await res.text();
-        const lines = csvText.trim().split(/\r?\n/);
-        if (lines.length === 0) continue;
-        const header = lines[0].split(',');
-        const idxTag = header.indexOf('tag');
-        const idxActive = header.findIndex(h => h.toLowerCase() === 'is-active');
-        // detect language columns display_xx
-        const displayCols = {};
-        header.forEach((h, i) => {
-          const m = h.match(/^display_(.+)$/);
-          if (m) {
-            displayCols[m[1]] = i;
-            langSet.add(m[1]);
-          }
-        });
-        const items = [];
-        for (let i = 1; i < lines.length; i++) {
-          const parts = lines[i].split(',');
-          const tagVal = parts[idxTag];
-          if (!tagVal) continue;
-          const isActive = idxActive >= 0 ? (parts[idxActive] || '').toLowerCase() === 'true' : true;
-          if (!isActive) continue;
-          const obj = { tag: tagVal };
-          for (const code in displayCols) {
-            obj[`display_${code}`] = parts[displayCols[code]] || tagVal;
-          }
-          items.push(obj);
-        }
-        tagsByType[type] = items;
-      } catch (err) {
-        console.warn('Error loading tag CSV for', type, err);
-      }
-    }
-    // Update global languages from discovered set
-    languages = Array.from(langSet);
-  }
-
-  // Populate the language select dropdown
   function initLanguages() {
     const sel = document.getElementById('lang');
     sel.innerHTML = '';
@@ -382,310 +170,54 @@
     sel.value = currentLang;
     sel.addEventListener('change', async () => {
       currentLang = sel.value;
+      saveLang();
       await loadStrings(currentLang);
-      updateStaticText();
-      renderTagSelectors();
-      updateTagsOutput();
+      updateText();
     });
   }
 
-  // Update static text labels based on the loaded strings
-  function updateStaticText() {
-    document.getElementById('title').textContent = strings.title || 'Swing Tag Builder';
-    document.getElementById('langLabel').textContent = strings.language_label || 'Language:';
-    document.getElementById('eventTitleLabel').textContent = strings.event_title_label || 'Event title';
-    document.getElementById('eventTitle').placeholder = strings.event_title_placeholder || '';
-    document.getElementById('locationLabel').textContent = strings.location_label || 'Location';
-    document.getElementById('location').placeholder = strings.location_placeholder || '';
-    document.getElementById('descriptionLabel').textContent = strings.description_label || 'Description';
-    document.getElementById('description').placeholder = strings.description_placeholder || '';
-    document.getElementById('selectedTagsLabel').textContent = strings.selected_tags_label || 'Selected Tags';
-    // Update copy and create buttons inside the selected-actions container
-    const copyBtn = document.getElementById('copyTags');
-    if (copyBtn) {
-      const span = copyBtn.querySelector('.btn-text');
-      if (span) span.textContent = strings.copy_tags_button || 'Copy tags';
-    }
-    const createBtn = document.getElementById('createEvent');
-    if (createBtn) {
-      const span = createBtn.querySelector('.btn-text');
-      if (span) span.textContent = strings.create_event_button || 'Create event';
-    }
-    document.getElementById('clearSelections').textContent = strings.clear_selections_button || 'Clear selections';
-    // Import section labels
-    document.getElementById('importTagsLabel').textContent = strings.import_tags_label || 'Import tags';
-    document.getElementById('importInput').placeholder = strings.import_tags_placeholder || '#tag1 #tag2';
-    document.getElementById('importButton').textContent = strings.import_tags_button || 'Import tags';
+  function updateText() {
+    document.getElementById('mainTitle').textContent = strings.main_title || 'Swing Calendar Editors Guide';
+    document.getElementById('mainLangLabel').textContent = strings.language_label || 'Language:';
+    // security section
+    document.getElementById('securityTitle').textContent = strings.security_section_title || 'Security & Onboarding';
+    document.getElementById('securityText').textContent = strings.security_section_text || '';
+    document.getElementById('securityButton').textContent = strings.security_button || 'Read security policy';
+    // tag generator
+    document.getElementById('tagTitle').textContent = strings.tag_generator_section_title || 'Tag Generator';
+    document.getElementById('tagText').textContent = strings.tag_generator_section_text || '';
+    document.getElementById('tagButton').textContent = strings.tag_generator_button || 'Open Tag Builder';
+    // editor onboarding
+    document.getElementById('editorTitle').textContent = strings.editor_section_title || 'Interested in becoming an editor?';
+    document.getElementById('editorText').textContent = strings.editor_section_text || '';
+    document.getElementById('downloadAgreementButton').textContent = strings.download_agreement_button || 'Download agreement';
+    // system overview
+    document.getElementById('systemTitle').textContent = strings.system_section_title || 'How the system & tags work';
+    document.getElementById('systemText').textContent = strings.system_section_text || '';
+    document.getElementById('systemButton').textContent = strings.learn_more_button || 'Learn more';
   }
 
-  // Render tag selectors for each type
-  function renderTagSelectors() {
-    const container = document.getElementById('tagSelectors');
-    container.innerHTML = '';
-    const table = document.createElement('table');
-    table.className = 'tag-table';
-    const types = Object.keys(tagsByType).sort();
-    types.forEach(type => {
-      const items = tagsByType[type];
-      if (!items || items.length === 0) return;
-      const settings = typeSettings[type] || { ui_type: 'checkbox-multi', display: {} };
-      const tr = document.createElement('tr');
-      // First column: group label only
-      const tdLabel = document.createElement('td');
-      tdLabel.className = 'group-label';
-      const langName = settings.display[currentLang] || settings.display['en'] || type;
-      tdLabel.textContent = langName;
-      tr.appendChild(tdLabel);
-      // Second column: UI for selecting tags
-      const tdInput = document.createElement('td');
-      if (settings.ui_type === 'dropdown-single') {
-        const sel = document.createElement('select');
-        const placeholder = document.createElement('option');
-        placeholder.value = '';
-        placeholder.textContent = strings.select_placeholder || '— select —';
-        sel.appendChild(placeholder);
-        items.forEach(item => {
-          const opt = document.createElement('option');
-          opt.value = item.tag;
-          opt.textContent = item[`display_${currentLang}`] || item[`display_en`] || item.tag;
-          sel.appendChild(opt);
-        });
-        sel.value = state[type] || '';
-        sel.addEventListener('change', () => {
-          state[type] = sel.value;
-          updateTagsOutput();
-          saveStateToStorage();
-        });
-        tdInput.appendChild(sel);
-      } else {
-        if (!state[type] || !(state[type] instanceof Set)) state[type] = new Set();
-        items.forEach(item => {
-          const labelEl = document.createElement('label');
-          labelEl.style.display = 'block';
-          const input = document.createElement('input');
-          input.type = 'checkbox';
-          input.value = item.tag;
-          input.checked = state[type].has(item.tag);
-          input.addEventListener('change', () => {
-            if (input.checked) {
-              state[type].add(item.tag);
-            } else {
-              state[type].delete(item.tag);
-            }
-            updateTagsOutput();
-            saveStateToStorage();
-          });
-          labelEl.appendChild(input);
-          const span = document.createElement('span');
-          span.textContent = ' ' + (item[`display_${currentLang}`] || item[`display_en`] || item.tag);
-          labelEl.appendChild(span);
-          tdInput.appendChild(labelEl);
-        });
-      }
-      tr.appendChild(tdInput);
-      // Third column: action buttons (All/None) stacked vertically
-      const tdActions = document.createElement('td');
-      const actions = document.createElement('div');
-      actions.className = 'actions';
-      if (settings.ui_type !== 'dropdown-single') {
-        const allBtn = document.createElement('button');
-        allBtn.type = 'button';
-        allBtn.textContent = strings.all_button || 'All';
-        allBtn.addEventListener('click', () => {
-          state[type] = new Set(items.map(item => item.tag));
-          renderTagSelectors();
-          updateTagsOutput();
-        });
-        actions.appendChild(allBtn);
-      }
-      const noneBtn = document.createElement('button');
-      noneBtn.type = 'button';
-      noneBtn.textContent = strings.none_button || 'None';
-      noneBtn.addEventListener('click', () => {
-        if (settings.ui_type === 'dropdown-single') {
-          state[type] = '';
-        } else {
-          state[type] = new Set();
-        }
-        renderTagSelectors();
-        updateTagsOutput();
-      });
-      actions.appendChild(noneBtn);
-      tdActions.appendChild(actions);
-      tr.appendChild(tdActions);
-      table.appendChild(tr);
-    });
-    container.appendChild(table);
-  }
-
-  // Build the tag string and update the output textarea
-  function updateTagsOutput() {
-    const tags = [];
-    for (const type in state) {
-      const val = state[type];
-      if (!val) continue;
-      if (val instanceof Set) {
-        val.forEach(v => {
-          tags.push('#' + v);
-        });
-      } else if (typeof val === 'string' && val !== '') {
-        tags.push('#' + val);
-      }
-    }
-    let output = '';
-    if (tags.length > 0) {
-      output = tags.join(' ');
-      // Build the string used for copying/creating events. Prepend a separator line.
-      tagsString = `---\n${output}`;
-    } else {
-      tagsString = '';
-      output = '';
-    }
-    document.getElementById('tagsOutput').value = output;
-    // Save updated state to storage
-    saveStateToStorage();
-  }
-
-  // Copy the current tag string to clipboard
-  async function copyTagsToClipboard() {
-    const output = document.getElementById('tagsOutput');
-    const textToCopy = tagsString || output.value;
-    try {
-      await navigator.clipboard.writeText(textToCopy);
-      const btn = document.getElementById('copyTags');
-      const originalText = btn.querySelector('.btn-text') ? btn.querySelector('.btn-text').textContent : btn.textContent;
-      // Temporarily show success message on the span if available, else on button
-      if (btn.querySelector('.btn-text')) {
-        btn.querySelector('.btn-text').textContent = strings.copy_success || 'Copied!';
-      } else {
-        btn.textContent = strings.copy_success || 'Copied!';
-      }
-      setTimeout(() => {
-        if (btn.querySelector('.btn-text')) {
-          btn.querySelector('.btn-text').textContent = originalText;
-        } else {
-          btn.textContent = originalText;
-        }
-      }, 2000);
-    } catch (err) {
-      // fallback: prompt the user
-      alert(strings.copy_error || 'Press Ctrl/Cmd+C to copy.');
-    }
-  }
-
-  // Clear all selections and reset state
-  function clearAllSelections() {
-    for (const type in state) {
-      if (state[type] instanceof Set) {
-        state[type].clear();
-      } else {
-        state[type] = '';
-      }
-    }
-    document.getElementById('eventTitle').value = '';
-    document.getElementById('location').value = '';
-    document.getElementById('description').value = '';
-    renderTagSelectors();
-    updateTagsOutput();
-    saveStateToStorage();
-  }
-
-  // Build a Google Calendar event creation link and open it
-  function createEvent() {
-    const title = document.getElementById('eventTitle').value.trim();
-    const location = document.getElementById('location').value.trim();
-    let description = document.getElementById('description').value.trim();
-    // Append tags to the description if any
-    if (tagsString) {
-      if (description) {
-        description += '\n\n' + tagsString;
-      } else {
-        description = tagsString;
-      }
-    }
-    // Build base URL
-    let url = 'https://calendar.google.com/calendar/render?action=TEMPLATE';
-    if (title) url += '&text=' + encodeURIComponent(title);
-    if (description) url += '&details=' + encodeURIComponent(description);
-    if (location) url += '&location=' + encodeURIComponent(location);
-    // Open in new tab
-    window.open(url, '_blank');
-  }
-
-  // Attach event handlers
   function attachHandlers() {
-    document.getElementById('copyTags').addEventListener('click', copyTagsToClipboard);
-    document.getElementById('clearSelections').addEventListener('click', clearAllSelections);
-    document.getElementById('createEvent').addEventListener('click', createEvent);
-    // Save field changes to storage
-    ['eventTitle','location','description'].forEach(id => {
-      const el = document.getElementById(id);
-      el.addEventListener('input', () => {
-        saveStateToStorage();
-      });
+    document.getElementById('securityButton').addEventListener('click', () => {
+      window.location.href = 'security.html';
     });
-    // Import tags handler
-    document.getElementById('importButton').addEventListener('click', importTags);
+    document.getElementById('tagButton').addEventListener('click', () => {
+      window.location.href = 'tag-builder.html';
+    });
+    document.getElementById('downloadAgreementButton').addEventListener('click', () => {
+      // open the PDF in new tab for download; use relative path
+      window.open('Editor_Access_Agreement_DE.pdf', '_blank');
+    });
+    document.getElementById('systemButton').addEventListener('click', () => {
+      window.location.href = 'quick-model.html';
+    });
   }
 
-  // Import tags from the import textarea and update the state
-  function importTags() {
-    const input = document.getElementById('importInput');
-    const warnings = document.getElementById('importWarnings');
-    warnings.innerHTML = '';
-    const text = input.value || '';
-    const foundTags = text.match(/#([^\s#]+)/g) || [];
-    const unknown = [];
-    // Create a mapping from tag value to its types for quick lookup
-    const tagToTypes = {};
-    for (const type in tagsByType) {
-      tagsByType[type].forEach(item => {
-        if (!tagToTypes[item.tag]) tagToTypes[item.tag] = [];
-        tagToTypes[item.tag].push(type);
-      });
-    }
-    foundTags.forEach(raw => {
-      const tagVal = raw.slice(1); // remove '#'
-      const types = tagToTypes[tagVal];
-      if (!types || types.length === 0) {
-        unknown.push(tagVal);
-        return;
-      }
-      types.forEach(type => {
-        const settings = typeSettings[type] || {};
-        if (settings.ui_type === 'dropdown-single') {
-          state[type] = tagVal;
-        } else {
-          if (!state[type] || !(state[type] instanceof Set)) state[type] = new Set();
-          state[type].add(tagVal);
-        }
-      });
-    });
-    // Show warnings for unknown tags
-    if (unknown.length > 0) {
-      unknown.forEach(tag => {
-        const div = document.createElement('div');
-        div.className = 'import-warning';
-        div.textContent = (strings.import_warning_unknown_tag || 'Unknown tag: {tag}').replace('{tag}', tag);
-        warnings.appendChild(div);
-      });
-    }
-    renderTagSelectors();
-    updateTagsOutput();
-    saveStateToStorage();
-  }
-
-  // Initialise the page
   (async () => {
-    await loadTypeSettings();
-    await loadTags();
+    loadSavedLang();
     await loadStrings(currentLang);
     initLanguages();
-    // Restore saved state before rendering selectors so values appear selected
-    loadStateFromStorage();
-    updateStaticText();
-    renderTagSelectors();
-    updateTagsOutput();
+    updateText();
     attachHandlers();
   })();
   </script>

@@ -1,0 +1,273 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Quick Mental Model</title>
+  <!--
+    This page provides a detailed explanation of how the tag‑based event feed works,
+    including a mental model and examples. It follows the same dark theme and
+    localisation approach as other pages, with a back button at the bottom.
+  -->
+  <style>
+    :root {
+      --gap: 12px;
+      --pad: 14px;
+      --radius: 12px;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+    }
+    body {
+      margin: 0;
+      padding: 20px;
+      background: #0b0f16;
+      color: #eaf0ff;
+    }
+    a { color: #9bcbff; text-decoration: none; }
+    .container {
+      max-width: 960px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    header {
+      margin-bottom: 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: var(--gap);
+    }
+    h1 {
+      margin: 0;
+      font-size: 24px;
+      color: #d0dbff;
+    }
+    .lang-container {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .card {
+      background: #121827;
+      border: 1px solid #1f2a44;
+      border-radius: var(--radius);
+      padding: var(--pad);
+      margin-bottom: var(--gap);
+    }
+    h2, h3, h4 {
+      margin-top: 1em;
+      margin-bottom: 0.5em;
+      color: #d0dbff;
+    }
+    p {
+      margin-top: 0;
+      margin-bottom: 1em;
+      line-height: 1.4;
+    }
+    ul {
+      margin-top: 0;
+      margin-bottom: 1em;
+      padding-left: 20px;
+    }
+    li { margin-bottom: 0.5em; }
+    button {
+      background: #1a2540;
+      color: #eaf0ff;
+      border: 1px solid #2a3f66;
+      border-radius: 10px;
+      padding: 8px 12px;
+      font-size: 14px;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #2a3f66;
+      border-color: #3c548a;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1 id="quickPageTitle">Quick mental model</h1>
+      <div class="lang-container">
+        <label id="quickLangLabel" for="lang">Language:</label>
+        <select id="lang"></select>
+      </div>
+    </header>
+    <div class="card">
+      <article id="quickContent">
+        <h1>Tag‑Based Event Feed: Quick Mental Model &amp; “Radio Station” Analogy</h1>
+        <p>This document explains how your Google Apps Script router selects and publishes events to iCalendar feeds, using a simple mental model and concrete, copy‑pasteable examples.</p>
+
+        <h2>1) Quick mental model</h2>
+        <ul>
+          <li><strong>Tags source:</strong> Only <code>#hashtags</code> found in an event’s <strong>summary</strong> or <strong>description</strong> are considered. The Google Calendar <strong>Location</strong> field is ignored by default.</li>
+          <li><strong>Category filters:</strong> Each feed can listen for categories like <code>location</code>, <code>dance_type</code>, <code>event_type</code>, <code>level</code>, etc.
+            <ul>
+              <li><em>OR within each category, AND across categories.</em></li>
+              <li>Example: a feed listening to <code>#weimar</code> or <code>#jena</code> for <em>location</em> <strong>and</strong> <code>#lindy-hop</code> for <em>dance type</em> means (<code>#weimar</code> OR <code>#jena</code>) AND <code>#lindy-hop</code> must be present.</li>
+            </ul>
+          </li>
+          <li><strong>Extra tags (q=)</strong> act as a hard AND: a feed listening for <code>#weimar</code> and <code>#english</code> must find both tags.</li>
+          <li><strong>Allowed‑tags guardrail:</strong> Requested tags are limited to those published in your allowed CSVs. If a tag is inactive or missing, it’s dropped silently, which widens the feed.</li>
+          <li><strong>Time window:</strong> Only events within [now − 7 days … now + 365 days] are considered.</li>
+          <li><strong>Untagged events:</strong> Events with no hashtags only reach feeds that have <em>no filters</em> and <em>no extra tag requirements</em>.</li>
+        </ul>
+        <blockquote><p>If a feed doesn’t specify any tag for a certain category, that category is <em>ignored</em>—any event, even untagged ones, can match that part.</p></blockquote>
+
+        <h2>2) “Radio station” analogy</h2>
+        <p>Think of each <strong>tag category</strong> (e.g., <code>location</code>, <code>dance_type</code>) as a <strong>frequency band</strong>.</p>
+        <p>A <strong>feed</strong> is like a <strong>radio listener</strong> that tunes into one or more frequencies within each band. For example, it listens to <code>#weimar</code> and <code>#lindy-hop</code>.</p>
+        <p>An <strong>event</strong> is a <strong>radio broadcast</strong>, transmitting every hashtag it contains.</p>
+        <p>The feed “hears” an event only if:</p>
+        <ul>
+          <li>For every tuned band (each non‑empty category), the event broadcasts <strong>at least one</strong> matching tag; and</li>
+          <li>For extra tags, the event broadcasts <strong>all</strong> of them.</li>
+        </ul>
+        <p>If the feed doesn’t tune a band (no filters in that category, or all tags were pruned), that band is <em>open</em>—it hears everything on that frequency.</p>
+
+        <h2>3) Simple Examples</h2>
+        <h3>Example events (hashtags inside summary/description)</h3>
+        <ul>
+          <li><strong>Event A</strong> — <code>#weimar #lindy-hop #social #beginners #lead #slow #german</code></li>
+          <li><strong>Event B</strong> — <code>#jena #balboa #workshop #intermediate #follow #english</code></li>
+          <li><strong>Event C</strong> — <code>#weimar #balboa #social #advanced #follow</code></li>
+          <li><strong>Event D</strong> — <em>(no hashtags at all)</em> — even if Calendar Location says “Weimar,” it doesn’t count by default.</li>
+        </ul>
+        <blockquote><p>Assume all events are within the valid time window and have allowed tags.</p></blockquote>
+
+        <h3>Which feeds hear which events</h3>
+        <h4>Feeds with no filters</h4>
+        <p><strong>Listening to:</strong> all broadcasts (no tuned tags)</p>
+        <p><strong>Hear:</strong> A, B, C, D</p>
+        <p><strong>Why:</strong> No restrictions.</p>
+
+        <h4>Feeds listening to a single location tag</h4>
+        <p><strong>Listening to:</strong> <code>#weimar</code></p>
+        <p><strong>Hear:</strong> A, C</p>
+        <p><strong>Don’t hear:</strong> B (no <code>#weimar</code>), D (no tags)</p>
+
+        <p><strong>Listening to:</strong> <code>#weimar</code> or <code>#jena</code></p>
+        <p><strong>Hear:</strong> A, B, C</p>
+        <p><strong>Don’t hear:</strong> D</p>
+
+        <h4>Feeds listening to location + dance type</h4>
+        <p><strong>Listening to:</strong> <code>#weimar</code> and <code>#lindy-hop</code></p>
+        <p><strong>Hear:</strong> A</p>
+        <p><strong>Don’t hear:</strong> B, C, D</p>
+
+        <p><strong>Listening to:</strong> <code>#weimar</code> and (<code>#lindy-hop</code> or <code>#balboa</code>)</p>
+        <p><strong>Hear:</strong> A, C</p>
+
+        <h4>Feeds with three tuned categories</h4>
+        <p><strong>Listening to:</strong> <code>#jena</code>, <code>#social</code>, and <code>#advanced</code></p>
+        <p><strong>Hear:</strong> none</p>
+
+        <p><strong>Listening to:</strong> <code>#weimar</code>, <code>#social</code>, and <code>#advanced</code></p>
+        <p><strong>Hear:</strong> C</p>
+
+        <h4>Feeds that also require extra tags</h4>
+        <p><strong>Listening to:</strong> all events containing <code>#weimar</code></p>
+        <p><strong>Hear:</strong> A, C</p>
+        <p><strong>Don’t hear:</strong> B, D</p>
+
+        <p><strong>Listening to:</strong> <code>#weimar</code> and also <code>#follow</code></p>
+        <p><strong>Hear:</strong> C</p>
+        <p><strong>Don’t hear:</strong> A (no <code>#follow</code>), B (no <code>#weimar</code>), D (no tags)</p>
+
+        <p><strong>Listening to:</strong> <code>#balboa</code> and also <code>#weimar</code> and <code>#english</code></p>
+        <p><strong>Hear:</strong> none (C lacks <code>#english</code>, B lacks <code>#weimar</code>)</p>
+
+        <h4>When a tag isn’t allowed</h4>
+        <p>If <code>#weimar</code> is inactive or missing from the public CSV:</p>
+        <ul>
+          <li>Feed listening to <code>#weimar</code> and <code>#lindy-hop</code> becomes just <code>#lindy-hop</code>.</li>
+          <li><strong>Hear:</strong> A (and any other <code>#lindy-hop</code> events, regardless of city).</li>
+        </ul>
+
+        <h4>Untagged events with location field set</h4>
+        <p>Feed listening to <code>#weimar</code> doesn’t hear D.</p>
+        <p><strong>Why:</strong> D has no <code>#weimar</code> hashtag; Calendar location field isn’t used.</p>
+
+        <h2>4) Tag publishing tool</h2>
+        <p>For easier tag creation and validation, use the <a href="tag-builder.html">Swing Tag Builder</a>.</p>
+
+        <h2>5) One‑glance decision tree</h2>
+        <p><strong>Does the feed tune any tag category or extra tags?</strong></p>
+        <ul>
+          <li><strong>No:</strong> It hears all events (tags don’t matter).</li>
+          <li><strong>Yes:</strong> For each tuned category, the event must include at least one matching tag, and for extra tags, it must include <em>all</em> of them.</li>
+        </ul>
+        <p>If any required tag is missing → the feed doesn’t hear that event.</p>
+      </article>
+    </div>
+    <div style="display: flex; justify-content: flex-start; margin-top: 12px;">
+      <button id="backButton">Back</button>
+    </div>
+  </div>
+
+  <script>
+  // Localisation for quick model page
+  let currentLang = 'en';
+  let strings = {};
+  const languages = ['en','de'];
+
+  function loadSavedLang() {
+    try {
+      const saved = localStorage.getItem('editorGuideLang');
+      if (saved) currentLang = saved;
+    } catch (err) {}
+  }
+
+  async function loadStrings(lang) {
+    try {
+      const res = await fetch(`resources/local/${lang}/strings.json`, {cache:'no-store'});
+      if (!res.ok) throw new Error('failed');
+      strings = await res.json();
+    } catch (err) {
+      console.warn('Could not load strings for', lang);
+      if (lang !== 'en') {
+        await loadStrings('en');
+      }
+    }
+  }
+
+  function initLanguages() {
+    const sel = document.getElementById('lang');
+    sel.innerHTML = '';
+    languages.forEach(code => {
+      const opt = document.createElement('option');
+      opt.value = code;
+      opt.textContent = code;
+      sel.appendChild(opt);
+    });
+    sel.value = currentLang;
+    sel.addEventListener('change', async () => {
+      currentLang = sel.value;
+      try { localStorage.setItem('editorGuideLang', currentLang); } catch (err) {}
+      await loadStrings(currentLang);
+      updateText();
+    });
+  }
+
+  function updateText() {
+    document.getElementById('quickPageTitle').textContent = strings.quick_model_page_title || 'Tag‑Based Event Feed: Quick Mental Model';
+    document.getElementById('quickLangLabel').textContent = strings.language_label || 'Language:';
+    document.getElementById('backButton').textContent = strings.back_button || 'Back';
+  }
+
+  function attachHandlers() {
+    document.getElementById('backButton').addEventListener('click', () => {
+      window.location.href = 'index.html';
+    });
+  }
+
+  (async () => {
+    loadSavedLang();
+    await loadStrings(currentLang);
+    initLanguages();
+    updateText();
+    attachHandlers();
+  })();
+  </script>
+</body>
+</html>

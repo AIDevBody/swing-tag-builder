@@ -28,4 +28,21 @@
   ,
   "all_button": "Alle",
   "none_button": "Keine"
+  ,
+  "main_title": "Swing‑Kalender‑Editoren‑Leitfaden",
+  "security_section_title": "Sicherheit & Onboarding",
+  "security_section_text": "Lies unbedingt die Sicherheitsbedenken, bevor du den Kalender bearbeitest.",
+  "security_button": "Sicherheitsrichtlinie lesen",
+  "tag_generator_section_title": "Tag‑Generator",
+  "tag_generator_section_text": "Nutze den Tag‑Generator, um standardisierte Hashtags für deine Events zu erstellen.",
+  "tag_generator_button": "Tag‑Generator öffnen",
+  "editor_section_title": "Du möchtest Editor werden?",
+  "editor_section_text": "Um Editor zu werden, lade das Editor‑Zugriffsformular (Deutsch) herunter und unterschreibe es. Dein Sponsor kann dir sagen, wie du es an den Betreiber sendest.",
+  "download_agreement_button": "Vereinbarung herunterladen",
+  "system_section_title": "Wie das System & die Tags funktionieren",
+  "system_section_text": "Erfahre, wie Tags bestimmen, welche Events in Feeds erscheinen.",
+  "learn_more_button": "Mehr erfahren",
+  "security_page_title": "Calendar Editors — Sicherheit & Onboarding",
+  "quick_model_page_title": "Tag‑basierter Event‑Feed: Kurzmodell",
+  "back_button": "Zurück"
 }

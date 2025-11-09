@@ -28,4 +28,21 @@
   ,
   "all_button": "All",
   "none_button": "None"
+  ,
+  "main_title": "Swing Calendar Editors Guide",
+  "security_section_title": "Security & Onboarding",
+  "security_section_text": "Don’t miss reading the security concerns before editing the calendar.",
+  "security_button": "Read security policy",
+  "tag_generator_section_title": "Tag Generator",
+  "tag_generator_section_text": "Use the tag generator to compose standardised hashtags for your events.",
+  "tag_generator_button": "Open Tag Builder",
+  "editor_section_title": "Interested in becoming an editor?",
+  "editor_section_text": "To become an editor, download and sign the Editor Access Agreement (German). Your sponsor can tell you how to submit it to the maintainer.",
+  "download_agreement_button": "Download agreement",
+  "system_section_title": "How the system & tags work",
+  "system_section_text": "Learn how tags determine which events appear in feeds.",
+  "learn_more_button": "Learn more",
+  "security_page_title": "Calendar Editors — Security & Onboarding",
+  "quick_model_page_title": "Tag‑Based Event Feed: Quick Mental Model",
+  "back_button": "Back"
 }
