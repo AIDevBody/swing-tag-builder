@@ -96,14 +96,32 @@
       padding-right: 8px;
       white-space: nowrap;
     }
-    .tag-table .actions button {
-      margin-right: 4px;
+    .tag-table .actions {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .tag-table tr:not(:last-child) {
+      border-bottom: 1px solid #1f2a44;
     }
     .selected-tags {
       margin-top: var(--gap);
     }
     .selected-tags textarea {
       height: 60px;
+    }
+
+    /* Selected actions (copy and create buttons) under the tag list */
+    .selected-actions {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 8px;
+      margin-top: var(--gap);
+    }
+
+    .icon {
+      margin-right: 6px;
     }
     .title-bar {
       display: flex;
@@ -147,7 +165,6 @@
 
     <section class="card">
       <div class="controls">
-        <button id="copyTags">Copy tags</button>
         <button id="clearSelections">Clear selections</button>
       </div>
       <div class="event-fields">
@@ -166,9 +183,10 @@
         <div class="field selected-tags">
           <label id="selectedTagsLabel" for="tagsOutput"></label>
           <textarea id="tagsOutput" readonly></textarea>
-        </div>
-        <div class="field event-create">
-          <button id="createEvent">Create event</button>
+          <div class="selected-actions">
+            <button id="copyTags"><span class="icon">📋</span> <span class="btn-text"></span></button>
+            <button id="createEvent"><span class="icon">📅</span> <span class="btn-text"></span></button>
+          </div>
         </div>
       </div>
       <!-- Tag selectors will render into this table -->
@@ -382,9 +400,18 @@
     document.getElementById('descriptionLabel').textContent = strings.description_label || 'Description';
     document.getElementById('description').placeholder = strings.description_placeholder || '';
     document.getElementById('selectedTagsLabel').textContent = strings.selected_tags_label || 'Selected Tags';
-    document.getElementById('copyTags').textContent = strings.copy_tags_button || 'Copy tags';
+    // Update copy and create buttons inside the selected-actions container
+    const copyBtn = document.getElementById('copyTags');
+    if (copyBtn) {
+      const span = copyBtn.querySelector('.btn-text');
+      if (span) span.textContent = strings.copy_tags_button || 'Copy tags';
+    }
+    const createBtn = document.getElementById('createEvent');
+    if (createBtn) {
+      const span = createBtn.querySelector('.btn-text');
+      if (span) span.textContent = strings.create_event_button || 'Create event';
+    }
     document.getElementById('clearSelections').textContent = strings.clear_selections_button || 'Clear selections';
-    document.getElementById('createEvent').textContent = strings.create_event_button || 'Create event';
     // Import section labels
     document.getElementById('importTagsLabel').textContent = strings.import_tags_label || 'Import tags';
     document.getElementById('importInput').placeholder = strings.import_tags_placeholder || '#tag1 #tag2';
@@ -403,42 +430,13 @@
       if (!items || items.length === 0) return;
       const settings = typeSettings[type] || { ui_type: 'checkbox-multi', display: {} };
       const tr = document.createElement('tr');
-      // Left cell: group label and per‑group buttons
+      // First column: group label only
       const tdLabel = document.createElement('td');
       tdLabel.className = 'group-label';
       const langName = settings.display[currentLang] || settings.display['en'] || type;
       tdLabel.textContent = langName;
-      // If checkbox‑multi, provide All/None buttons; for dropdown provide only None
-      const actions = document.createElement('div');
-      actions.className = 'actions';
-      if (settings.ui_type !== 'dropdown-single') {
-        const allBtn = document.createElement('button');
-        allBtn.type = 'button';
-        allBtn.textContent = strings.all_button || 'All';
-        allBtn.addEventListener('click', () => {
-          state[type] = new Set(items.map(item => item.tag));
-          renderTagSelectors();
-          updateTagsOutput();
-        });
-        actions.appendChild(allBtn);
-      }
-      const noneBtn = document.createElement('button');
-      noneBtn.type = 'button';
-      noneBtn.textContent = strings.none_button || 'None';
-      noneBtn.addEventListener('click', () => {
-        if (settings.ui_type === 'dropdown-single') {
-          state[type] = '';
-        } else {
-          state[type] = new Set();
-        }
-        renderTagSelectors();
-        updateTagsOutput();
-      });
-      actions.appendChild(noneBtn);
-      tdLabel.appendChild(document.createElement('br'));
-      tdLabel.appendChild(actions);
       tr.appendChild(tdLabel);
-      // Right cell: UI for selecting tags
+      // Second column: UI for selecting tags
       const tdInput = document.createElement('td');
       if (settings.ui_type === 'dropdown-single') {
         const sel = document.createElement('select');
@@ -485,6 +483,36 @@
         });
       }
       tr.appendChild(tdInput);
+      // Third column: action buttons (All/None) stacked vertically
+      const tdActions = document.createElement('td');
+      const actions = document.createElement('div');
+      actions.className = 'actions';
+      if (settings.ui_type !== 'dropdown-single') {
+        const allBtn = document.createElement('button');
+        allBtn.type = 'button';
+        allBtn.textContent = strings.all_button || 'All';
+        allBtn.addEventListener('click', () => {
+          state[type] = new Set(items.map(item => item.tag));
+          renderTagSelectors();
+          updateTagsOutput();
+        });
+        actions.appendChild(allBtn);
+      }
+      const noneBtn = document.createElement('button');
+      noneBtn.type = 'button';
+      noneBtn.textContent = strings.none_button || 'None';
+      noneBtn.addEventListener('click', () => {
+        if (settings.ui_type === 'dropdown-single') {
+          state[type] = '';
+        } else {
+          state[type] = new Set();
+        }
+        renderTagSelectors();
+        updateTagsOutput();
+      });
+      actions.appendChild(noneBtn);
+      tdActions.appendChild(actions);
+      tr.appendChild(tdActions);
       table.appendChild(tr);
     });
     container.appendChild(table);
@@ -504,15 +532,16 @@
         tags.push('#' + val);
       }
     }
+    let output = '';
     if (tags.length > 0) {
-      // Create a separator line. Use three dashes to visually separate tags
-      const line = '---';
-      const tagLine = tags.map(t => ' ' + t).join('');
-      tagsString = `${line}\n${tagLine}`;
+      output = tags.join(' ');
+      // Build the string used for copying/creating events. Prepend a separator line.
+      tagsString = `---\n${output}`;
     } else {
       tagsString = '';
+      output = '';
     }
-    document.getElementById('tagsOutput').value = tagsString;
+    document.getElementById('tagsOutput').value = output;
     // Save updated state to storage
     saveStateToStorage();
   }
@@ -520,16 +549,26 @@
   // Copy the current tag string to clipboard
   async function copyTagsToClipboard() {
     const output = document.getElementById('tagsOutput');
-    output.focus();
-    output.select();
+    const textToCopy = tagsString || output.value;
     try {
-      await navigator.clipboard.writeText(output.value);
+      await navigator.clipboard.writeText(textToCopy);
       const btn = document.getElementById('copyTags');
-      const original = btn.textContent;
-      btn.textContent = strings.copy_success || 'Copied!';
-      setTimeout(() => { btn.textContent = original; }, 2000);
+      const originalText = btn.querySelector('.btn-text') ? btn.querySelector('.btn-text').textContent : btn.textContent;
+      // Temporarily show success message on the span if available, else on button
+      if (btn.querySelector('.btn-text')) {
+        btn.querySelector('.btn-text').textContent = strings.copy_success || 'Copied!';
+      } else {
+        btn.textContent = strings.copy_success || 'Copied!';
+      }
+      setTimeout(() => {
+        if (btn.querySelector('.btn-text')) {
+          btn.querySelector('.btn-text').textContent = originalText;
+        } else {
+          btn.textContent = originalText;
+        }
+      }, 2000);
     } catch (err) {
-      // fallback: instruct user to copy manually
+      // fallback: prompt the user
       alert(strings.copy_error || 'Press Ctrl/Cmd+C to copy.');
     }
   }
