@@ -1,5 +1,0 @@
-tag_type,tag,display_de,display_en,is-active
-role,leader,Leader,Leader,TRUE
-role,follower,Follower,Follower,TRUE
-role,switch,Switch,Switch,TRUE
-role,forced-switch,Switch (vorgegeben),Forced Switch,TRUE
