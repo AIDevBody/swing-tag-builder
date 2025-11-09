@@ -416,23 +416,25 @@
    * This ensures that only the explanatory content is printed rather than the entire page.
    */
   function printArticle() {
-    const card = document.querySelector('.card');
-    if (!card) return;
-    let article;
-    // Choose article based on current language
+    // Determine which article to print based on the current language
+    let articleEl;
     if (currentLang === 'de') {
-      article = document.getElementById('quickContentDe');
+      articleEl = document.getElementById('quickContentDe');
     } else {
-      article = document.getElementById('quickContentEn');
+      articleEl = document.getElementById('quickContentEn');
     }
-    if (!article) return;
+    if (!articleEl) return;
+    // Clone the article and remove inline display styles so it prints correctly
+    const clone = articleEl.cloneNode(true);
+    clone.removeAttribute('style');
+    // Open a new window to contain just the article for printing
     const printWindow = window.open('', '', 'width=800,height=600');
-    // Set appropriate title for printing (Drucken vs Print)
+    if (!printWindow) return;
     printWindow.document.write('<!doctype html><html><head><meta charset="utf-8"><title>' + (currentLang === 'de' ? 'Drucken' : 'Print') + '</title>');
-    // Add basic print styles for readability
+    // Basic print styles for readability
     printWindow.document.write('<style>body{font-family:system-ui, sans-serif; padding:20px; color:#000;} h1,h2,h3,h4{color:#000;} ul{margin-left:20px;} code{background:#f0f0f0; padding:2px 4px;}</style>');
     printWindow.document.write('</head><body>');
-    printWindow.document.write(article.outerHTML);
+    printWindow.document.write(clone.outerHTML);
     printWindow.document.write('</body></html>');
     printWindow.document.close();
     printWindow.focus();
