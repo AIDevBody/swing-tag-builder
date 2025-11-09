@@ -82,19 +82,34 @@
       background: #2a3f66;
       border-color: #3c548a;
     }
+
+    /* Floating back button on small screens */
+    .floating-btn {
+      position: fixed;
+      bottom: 16px;
+      right: 16px;
+      z-index: 1000;
+    }
+    @media (min-width: 600px) {
+      .floating-btn {
+        position: static;
+      }
+    }
   </style>
 </head>
 <body>
   <div class="container">
-    <header>
-      <h1 id="quickPageTitle">Quick mental model</h1>
+    <header style="display:flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: var(--gap);">
+      <button id="quickBackTop">Back</button>
       <div class="lang-container">
         <label id="quickLangLabel" for="lang">Language:</label>
         <select id="lang"></select>
       </div>
+      <button id="quickPrintTop">Print / PDF</button>
     </header>
     <div class="card">
-      <article id="quickContent">
+      <!-- English quick model content -->
+      <article id="quickContentEn">
         <h1>Tag‑Based Event Feed: Quick Mental Model &amp; “Radio Station” Analogy</h1>
         <p>This document explains how your Google Apps Script router selects and publishes events to iCalendar feeds, using a simple mental model and concrete, copy‑pasteable examples.</p>
 
@@ -199,14 +214,122 @@
         </ul>
         <p>If any required tag is missing → the feed doesn’t hear that event.</p>
       </article>
+
+      <!-- German quick model content -->
+      <article id="quickContentDe" style="display:none;">
+        <h1>Tag‑basierter Event‑Feed: Kurzmodell &amp; „Radiostation“-Analogie</h1>
+        <p>Dieses Dokument erklärt, wie Ihr Google Apps Script‑Router Ereignisse auswählt und an iCalendar‑Feeds veröffentlicht, anhand eines einfachen mentalen Modells und konkreter, kopierbarer Beispiele.</p>
+
+        <h2>1) Kurzes mentales Modell</h2>
+        <ul>
+          <li><strong>Tag‑Quelle:</strong> Es werden nur <code>#Hashtags</code> berücksichtigt, die in der <strong>Zusammenfassung</strong> oder <strong>Beschreibung</strong> eines Ereignisses gefunden werden. Das Google‑Kalender‑Feld <strong>Ort</strong> wird standardmäßig ignoriert.</li>
+          <li><strong>Kategorie‑Filter:</strong> Jeder Feed kann auf Kategorien wie <code>location</code>, <code>dance_type</code>, <code>event_type</code>, <code>level</code> usw. achten.
+            <ul>
+              <li><em>ODER innerhalb jeder Kategorie, UND über die Kategorien hinweg.</em></li>
+              <li>Beispiel: Ein Feed, der auf <code>#weimar</code> oder <code>#jena</code> als <em>Ort</em> und <code>#lindy-hop</code> als <em>Tanzstil</em> hört, bedeutet, dass (<code>#weimar</code> ODER <code>#jena</code>) UND <code>#lindy-hop</code> vorhanden sein müssen.</li>
+            </ul>
+          </li>
+          <li><strong>Zusätzliche Tags (q=):</strong> wirken als hartes UND: Ein Feed, der <code>#weimar</code> und <code>#english</code> hört, muss beide Tags finden.</li>
+          <li><strong>Schutzschiene zugelassene Tags:</strong> Angeforderte Tags sind auf diejenigen begrenzt, die in deinen erlaubten CSV‑Dateien veröffentlicht sind. Wenn ein Tag inaktiv oder fehlend ist, wird es stillschweigend entfernt, was den Feed erweitert.</li>
+          <li><strong>Zeitfenster:</strong> Es werden nur Ereignisse innerhalb des Zeitfensters [jetzt − 7 Tage … jetzt + 365 Tage] berücksichtigt.</li>
+          <li><strong>Untagged Events:</strong> Ereignisse ohne Hashtags erreichen nur Feeds, die <em>keine Filter</em> und <em>keine zusätzlichen Tag‑Anforderungen</em> haben.</li>
+        </ul>
+        <blockquote><p>Wenn ein Feed für eine bestimmte Kategorie kein Tag angibt, wird diese Kategorie <em>ignoriert</em> – jedes Ereignis, sogar ungetaggte, kann diesem Teil entsprechen.</p></blockquote>
+
+        <h2>2) „Radiostation“-Analogie</h2>
+        <p>Betrachten Sie jede <strong>Tag‑Kategorie</strong> (z. B. <code>location</code>, <code>dance_type</code>) als ein <strong>Frequenzband</strong>.</p>
+        <p>Ein <strong>Feed</strong> ist wie ein <strong>Radiohörer</strong>, der auf eine oder mehrere Frequenzen innerhalb jedes Bandes einstellt. Zum Beispiel hört er <code>#weimar</code> und <code>#lindy-hop</code>.</p>
+        <p>Ein <strong>Ereignis</strong> ist eine <strong>Radiosendung</strong>, die jeden enthaltenen Hashtag ausstrahlt.</p>
+        <p>Der Feed „hört“ ein Ereignis nur, wenn:</p>
+        <ul>
+          <li>Für jedes eingestellte Band (jede nicht leere Kategorie) das Ereignis <strong>mindestens einen</strong> passenden Tag ausstrahlt; und</li>
+          <li>Für zusätzliche Tags das Ereignis <strong>alle</strong> von ihnen ausstrahlt.</li>
+        </ul>
+        <p>Wenn der Feed ein Band nicht einstellt (keine Filter in dieser Kategorie oder alle Tags wurden entfernt), ist dieses Band <em>offen</em> – er hört alles auf dieser Frequenz.</p>
+
+        <h2>3) Einfache Beispiele</h2>
+        <h3>Beispiel‑Events (Hashtags in Zusammenfassung/Beschreibung)</h3>
+        <ul>
+          <li><strong>Event A</strong> — <code>#weimar #lindy-hop #social #beginners #lead #slow #german</code></li>
+          <li><strong>Event B</strong> — <code>#jena #balboa #workshop #intermediate #follow #english</code></li>
+          <li><strong>Event C</strong> — <code>#weimar #balboa #social #advanced #follow</code></li>
+          <li><strong>Event D</strong> — <em>(keine Hashtags)</em> — selbst wenn im Kalender der Ort „Weimar“ steht, zählt das standardmäßig nicht.</li>
+        </ul>
+        <blockquote><p>Angenommen, alle Events liegen im gültigen Zeitfenster und haben erlaubte Tags.</p></blockquote>
+
+        <h3>Welche Feeds welche Events hören</h3>
+        <h4>Feeds ohne Filter</h4>
+        <p><strong>Hört zu:</strong> alle Sendungen (keine eingestellten Tags)</p>
+        <p><strong>Hört:</strong> A, B, C, D</p>
+        <p><strong>Warum:</strong> Keine Einschränkungen.</p>
+
+        <h4>Feeds, die auf ein einzelnes Standort‑Tag hören</h4>
+        <p><strong>Hört zu:</strong> <code>#weimar</code></p>
+        <p><strong>Hört:</strong> A, C</p>
+        <p><strong>Hört nicht:</strong> B (kein <code>#weimar</code>), D (keine Tags)</p>
+
+        <p><strong>Hört zu:</strong> <code>#weimar</code> oder <code>#jena</code></p>
+        <p><strong>Hört:</strong> A, B, C</p>
+        <p><strong>Hört nicht:</strong> D</p>
+
+        <h4>Feeds, die auf Standort + Tanzstil hören</h4>
+        <p><strong>Hört zu:</strong> <code>#weimar</code> und <code>#lindy-hop</code></p>
+        <p><strong>Hört:</strong> A</p>
+        <p><strong>Hört nicht:</strong> B, C, D</p>
+
+        <p><strong>Hört zu:</strong> <code>#weimar</code> und (<code>#lindy-hop</code> oder <code>#balboa</code>)</p>
+        <p><strong>Hört:</strong> A, C</p>
+
+        <h4>Feeds mit drei eingestellten Kategorien</h4>
+        <p><strong>Hört zu:</strong> <code>#jena</code>, <code>#social</code> und <code>#advanced</code></p>
+        <p><strong>Hört:</strong> keine</p>
+
+        <p><strong>Hört zu:</strong> <code>#weimar</code>, <code>#social</code> und <code>#advanced</code></p>
+        <p><strong>Hört:</strong> C</p>
+
+        <h4>Feeds, die zusätzliche Tags erfordern</h4>
+        <p><strong>Hört zu:</strong> allen Ereignissen mit <code>#weimar</code></p>
+        <p><strong>Hört:</strong> A, C</p>
+        <p><strong>Hört nicht:</strong> B, D</p>
+
+        <p><strong>Hört zu:</strong> <code>#weimar</code> und auch <code>#follow</code></p>
+        <p><strong>Hört:</strong> C</p>
+        <p><strong>Hört nicht:</strong> A (kein <code>#follow</code>), B (kein <code>#weimar</code>), D (keine Tags)</p>
+
+        <p><strong>Hört zu:</strong> <code>#balboa</code> und auch <code>#weimar</code> und <code>#english</code></p>
+        <p><strong>Hört:</strong> keine (C hat kein <code>#english</code>, B hat kein <code>#weimar</code>)</p>
+
+        <h4>Wenn ein Tag nicht erlaubt ist</h4>
+        <p>Wenn <code>#weimar</code> in der öffentlichen CSV inaktiv oder fehlend ist:</p>
+        <ul>
+          <li>Ein Feed, der auf <code>#weimar</code> und <code>#lindy-hop</code> hört, wird zu einem Feed, der nur <code>#lindy-hop</code> hört.</li>
+          <li><strong>Hört:</strong> A (und alle anderen <code>#lindy-hop</code>-Events, unabhängig von der Stadt).</li>
+        </ul>
+
+        <h4>Untagged Events mit gesetztem Ortsfeld</h4>
+        <p>Ein Feed, der <code>#weimar</code> hört, hört D nicht.</p>
+        <p><strong>Warum:</strong> D hat keinen <code>#weimar</code>-Hashtag; das Kalendersfeld Ort wird nicht verwendet.</p>
+
+        <h2>4) Tag-Veröffentlichungswerkzeug</h2>
+        <p>Für eine einfachere Tag-Erstellung und -Validierung nutze den <a href="tag-builder.html">Swing Tag Builder</a>.</p>
+
+        <h2>5) Entscheidungsbaum auf einen Blick</h2>
+        <p><strong>Stellt der Feed irgendeine Tag‑Kategorie oder zusätzliche Tags ein?</strong></p>
+        <ul>
+          <li><strong>Nein:</strong> Er hört alle Events (Tags spielen keine Rolle).</li>
+          <li><strong>Ja:</strong> Für jede eingestellte Kategorie muss das Ereignis mindestens einen passenden Tag enthalten, und für zusätzliche Tags muss es <em>alle</em> enthalten.</li>
+        </ul>
+        <p>Wenn ein erforderlicher Tag fehlt → hört der Feed dieses Ereignis nicht.</p>
+      </article>
     </div>
-    <div style="display: flex; justify-content: flex-start; margin-top: 12px;">
-      <button id="backButton">Back</button>
+    <div style="display: flex; justify-content: flex-start; gap: 8px; margin-top: 12px;">
+      <button id="quickBackBottom" class="floating-btn">Back</button>
+      <button id="quickPrintBottom">Print / PDF</button>
     </div>
   </div>
 
   <script>
-  // Localisation for quick model page
+  // Localisation and dynamic content for quick model page
   let currentLang = 'en';
   let strings = {};
   const languages = ['en','de'];
@@ -249,15 +372,41 @@
     });
   }
 
+  function updateContentLanguage() {
+    const enArticle = document.getElementById('quickContentEn');
+    const deArticle = document.getElementById('quickContentDe');
+    if (!enArticle || !deArticle) return;
+    if (currentLang === 'de') {
+      enArticle.style.display = 'none';
+      deArticle.style.display = '';
+    } else {
+      enArticle.style.display = '';
+      deArticle.style.display = 'none';
+    }
+  }
+
   function updateText() {
-    document.getElementById('quickPageTitle').textContent = strings.quick_model_page_title || 'Tag‑Based Event Feed: Quick Mental Model';
+    // update labels and buttons
     document.getElementById('quickLangLabel').textContent = strings.language_label || 'Language:';
-    document.getElementById('backButton').textContent = strings.back_button || 'Back';
+    const backButtons = document.querySelectorAll('#quickBackTop,#quickBackBottom');
+    backButtons.forEach(btn => { btn.textContent = strings.back_button || 'Back'; });
+    const printButtons = document.querySelectorAll('#quickPrintTop,#quickPrintBottom');
+    printButtons.forEach(btn => { btn.textContent = strings.print_button || 'Print / PDF'; });
+    updateContentLanguage();
   }
 
   function attachHandlers() {
-    document.getElementById('backButton').addEventListener('click', () => {
-      window.location.href = 'index.html';
+    const backButtons = document.querySelectorAll('#quickBackTop,#quickBackBottom');
+    backButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        window.location.href = 'index.html';
+      });
+    });
+    const printButtons = document.querySelectorAll('#quickPrintTop,#quickPrintBottom');
+    printButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        window.print();
+      });
     });
   }
 

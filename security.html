@@ -83,20 +83,35 @@
       background: #2a3f66;
       border-color: #3c548a;
     }
+
+    /* Floating back button on small screens */
+    .floating-btn {
+      position: fixed;
+      bottom: 16px;
+      right: 16px;
+      z-index: 1000;
+    }
+    @media (min-width: 600px) {
+      .floating-btn {
+        position: static;
+      }
+    }
   </style>
 </head>
 <body>
   <div class="container">
-    <header>
-      <h1 id="securityPageTitle">Security policy</h1>
+    <header style="display:flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: var(--gap);">
+      <button id="backButtonTop">Back</button>
       <div class="lang-container">
         <label id="securityLangLabel" for="lang">Language:</label>
         <select id="lang"></select>
       </div>
+      <button id="printButtonTop">Print / PDF</button>
     </header>
     <div class="card">
-      <article id="policyContent">
-        <h1>Calendar Editors — Security & Onboarding Policy</h1>
+      <!-- English policy content -->
+      <article id="policyContentEn">
+        <h1>Calendar Editors — Security &amp; Onboarding Policy</h1>
         <p>This document defines how editors can safely use the calendar system. It is maintained by a single maintainer for the good of the community. There is no organisation behind it, but everyone who participates must follow these rules and act responsibly.</p>
 
         <h2>1. Summary</h2>
@@ -177,14 +192,99 @@
           <li>Serious misuse may lead to reporting to authorities.</li>
         </ul>
       </article>
+
+      <!-- German policy content -->
+      <article id="policyContentDe" style="display:none;">
+        <h1>Kalender‑Editoren – Sicherheits‑ und Onboarding‑Richtlinie</h1>
+        <p>Dieses Dokument definiert, wie Redakteure das Kalendersystem sicher nutzen können. Es wird von einem einzelnen Betreuer zum Wohl der Gemeinschaft gepflegt. Es steht keine Organisation dahinter, aber jeder, der teilnimmt, muss diese Regeln befolgen und verantwortungsvoll handeln.</p>
+
+        <h2>1. Zusammenfassung</h2>
+        <p>Der Editorzugang ermöglicht es Personen, Ereignisse in gemeinsamen Kalendern zu erstellen, zu verändern und zu veröffentlichen, auf die sich Abonnenten verlassen. Editoren können Ereignisdetails ändern, Beschreibungen und Links hinzufügen und Benachrichtigungen auslösen. Missbrauch oder kompromittierte Konten können Sicherheits- und Vertrauensprobleme für alle verursachen.</p>
+        <p>Jeder neue Editor muss von einem bestehenden Editor eingeführt werden, und es werden nur Gmail-Konten für den Bearbeitungszugang akzeptiert. Editoren sind für ihre Handlungen verantwortlich, und ihre Sponsoren teilen die Verantwortung für jeden, den sie vorstellen.</p>
+
+        <h2>2. Hauptrisiken (Was schiefgehen kann)</h2>
+
+        <h3>2.1 Phishing und Verbreitung bösartiger Links</h3>
+        <p>Ein Editor kann Ereignisse mit Links in den Feldern <code>Beschreibung</code> oder <code>Ort</code> veröffentlichen. Bösartige Links können zu Phishing, Malware oder Diebstahl von Zugangsdaten führen. Abonnenten könnten auf diese Links klicken, weil sie davon ausgehen, dass sie sicher sind.</p>
+
+        <h3>2.2 Identitätsdiebstahl und Fehlinformation</h3>
+        <p>Böswillige Editoren könnten sich als legitime Organisatoren ausgeben, falsche Informationen verbreiten oder Ereignisdetails manipulieren, um Abonnenten in die Irre zu führen.</p>
+
+        <h3>2.3 Datenoffenlegung</h3>
+        <p>Ereignisbeschreibungen oder Links könnten genutzt werden, um Abonnentendaten zu sammeln oder öffentlich zu teilen.</p>
+
+        <h3>2.4 Risiko von Nicht‑Gmail‑Konten</h3>
+        <p>Es werden nur Gmail-Konten akzeptiert, weil diese automatisch in die Sicherheits- und Prüfmechanismen von Google integriert sind. Nicht-Gmail-Konten können:</p>
+        <ul>
+          <li>Keine ordnungsgemäße Identitätsprüfung und Wiederherstellungsoptionen bieten.</li>
+          <li>Die Sicherheitsrichtlinien von Google, die 2‑Schritt-Verifizierung und die Login-Verfolgung umgehen.</li>
+          <li>Leichter gefälscht werden, da sie möglicherweise keine vollständige Konto-Identitätsprüfung unterstützen.</li>
+        </ul>
+        <p>Aus diesen Gründen wird jede Anfrage von einer Nicht‑Gmail-Adresse abgelehnt.</p>
+
+        <h2>3. Onboarding‑Regel: Sponsor‑basierte Einführungen</h2>
+        <p>Jeder neue Editor muss von einem bestehenden Editor eingeführt und gesponsert werden. Der Sponsor:</p>
+        <ul>
+          <li>Bestätigt die Identität und Gmail-Adresse des neuen Editors.</li>
+          <li>Stellt sicher, dass der neue Editor die Sicherheitsrisiken und die zulässige Nutzung versteht.</li>
+          <li>Leitet die Informationen des neuen Editors die Sponsorkette nach oben, bis sie den Betreuer erreichen, der neue Editoren manuell in das System einträgt.</li>
+        </ul>
+        <p>Beim Versenden der Informationen des neuen Editors muss der Sponsor Folgendes einschließen:</p>
+        <ul>
+          <li>Vollständiger Name des neuen Editors</li>
+          <li>Gmail-Adresse</li>
+          <li>Beitrittsgrund (warum er/sie Ereignisse bearbeiten muss)</li>
+          <li>Die Kalender, die er/sie bearbeiten wird</li>
+          <li>Bestätigung, dass er/sie diese Richtlinie gelesen hat und die Verantwortung versteht</li>
+        </ul>
+        <p>Der Betreuer prüft manuell und fügt den neuen Editor dem System hinzu.</p>
+
+        <h2>4. Technische und Verfahrenskontrollen</h2>
+
+        <h3>4.1 Benachrichtigungen und Link‑Behandlung</h3>
+        <ul>
+          <li>Editoren müssen das Hinzufügen von nicht vertrauenswürdigen oder verdächtigen Links vermeiden.</li>
+          <li>Beschreibungen dürfen niemals Login-Formulare oder Links enthalten, die nach persönlichen Informationen fragen.</li>
+        </ul>
+
+        <h3>4.2 Protokollierung und Verantwortlichkeit</h3>
+        <ul>
+          <li>Das System zeichnet automatisch auf, wer was und wann bearbeitet.</li>
+          <li>Jede Bearbeitung (Erstellung, Aktualisierung, Löschung) wird mit der Gmail-Identität des Editors protokolliert.</li>
+          <li>Bei Missbrauch ermöglicht diese Verfolgung die Identifizierung des verantwortlichen Kontos.</li>
+        </ul>
+
+        <h3>4.3 Minimale Rechte, Zugriffsüberprüfung und Meldung</h3>
+        <ul>
+          <li>Zugriff nur gewähren, wenn er benötigt wird.</li>
+          <li>Zugriff für inaktive oder nicht vertrauenswürdige Editoren entfernen.</li>
+          <li>Jeder Sponsor ist dafür verantwortlich, jeden Missbrauch, von dem er erfährt, zu melden und sicherzustellen, dass die verantwortliche Person aus dem System entfernt wird.</li>
+        </ul>
+
+        <h3>4.4 Verantwortung und Konsequenzen</h3>
+        <p>Jeder Editor ist persönlich für das verantwortlich, was er veröffentlicht. Sponsoren sind dafür verantwortlich, zu überprüfen, dass die von ihnen eingeführten Personen in gutem Glauben handeln. Wenn eine Person ihren Zugriff missbraucht:</p>
+        <ul>
+          <li>Wird ihr Zugriff entzogen.</li>
+          <li>Wird sie persönlich für verursachte Schäden oder Missbrauch haftbar gemacht.</li>
+          <li>Werden Informationen über den Missbrauch gespeichert und gegebenenfalls an die Behörden weitergegeben.</li>
+        </ul>
+
+        <h2>5. Verantwortlichkeit</h2>
+        <ul>
+          <li>Editoren und Sponsoren sind gemeinsam für ihre Handlungen und die Handlungen der Personen verantwortlich, die sie einführen.</li>
+          <li>Der Betreuer kann bei Missbrauch oder Verdacht den Zugriff jederzeit entziehen.</li>
+          <li>Schwerwiegender Missbrauch kann zu Meldungen an Behörden führen.</li>
+        </ul>
+      </article>
     </div>
-    <div style="display: flex; justify-content: flex-start; margin-top: 12px;">
-      <button id="backButton">Back</button>
+    <div style="display: flex; justify-content: flex-start; gap: 8px; margin-top: 12px;">
+      <button id="backButtonBottom" class="floating-btn">Back</button>
+      <button id="printButtonBottom">Print / PDF</button>
     </div>
   </div>
 
   <script>
-  // Basic localisation for the security page
+  // Basic localisation for the security page with dual language content
   let currentLang = 'en';
   let strings = {};
   const languages = ['en','de'];
@@ -227,15 +327,42 @@
     });
   }
 
+  function updateContentLanguage() {
+    // show/hide appropriate article based on currentLang
+    const enArticle = document.getElementById('policyContentEn');
+    const deArticle = document.getElementById('policyContentDe');
+    if (!enArticle || !deArticle) return;
+    if (currentLang === 'de') {
+      enArticle.style.display = 'none';
+      deArticle.style.display = '';
+    } else {
+      enArticle.style.display = '';
+      deArticle.style.display = 'none';
+    }
+  }
+
   function updateText() {
-    document.getElementById('securityPageTitle').textContent = strings.security_page_title || 'Calendar Editors — Security & Onboarding';
+    // Update labels and button text
     document.getElementById('securityLangLabel').textContent = strings.language_label || 'Language:';
-    document.getElementById('backButton').textContent = strings.back_button || 'Back';
+    const backButtons = document.querySelectorAll('#backButtonTop,#backButtonBottom');
+    backButtons.forEach(btn => { btn.textContent = strings.back_button || 'Back'; });
+    const printButtons = document.querySelectorAll('#printButtonTop,#printButtonBottom');
+    printButtons.forEach(btn => { btn.textContent = strings.print_button || 'Print / PDF'; });
+    updateContentLanguage();
   }
 
   function attachHandlers() {
-    document.getElementById('backButton').addEventListener('click', () => {
-      window.location.href = 'index.html';
+    const backButtons = document.querySelectorAll('#backButtonTop,#backButtonBottom');
+    backButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        window.location.href = 'index.html';
+      });
+    });
+    const printButtons = document.querySelectorAll('#printButtonTop,#printButtonBottom');
+    printButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        window.print();
+      });
     });
   }
 

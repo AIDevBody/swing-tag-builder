@@ -139,6 +139,7 @@
   <div class="container">
     <header>
       <div class="title-bar">
+        <button id="backToGuide" style="margin-right:8px;">Back</button>
         <h1 id="title">Swing Tag Builder</h1>
         <div class="lang-container">
           <label id="langLabel" for="lang">Language:</label>
@@ -357,6 +358,11 @@
   }
 
   function updateStaticText() {
+    // set back button text
+    const backBtn = document.getElementById('backToGuide');
+    if (backBtn) {
+      backBtn.textContent = strings.back_button || 'Back';
+    }
     document.getElementById('title').textContent = strings.title || 'Swing Tag Builder';
     document.getElementById('langLabel').textContent = strings.language_label || 'Language:';
     document.getElementById('eventTitleLabel').textContent = strings.event_title_label || 'Event title';
@@ -572,6 +578,13 @@
       });
     });
     document.getElementById('importButton').addEventListener('click', importTags);
+
+    const backBtn = document.getElementById('backToGuide');
+    if (backBtn) {
+      backBtn.addEventListener('click', () => {
+        window.location.href = 'index.html';
+      });
+    }
   }
 
   function importTags() {

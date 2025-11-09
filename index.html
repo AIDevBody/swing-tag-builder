@@ -82,10 +82,11 @@
       background: #2a3f66;
       border-color: #3c548a;
     }
-    .card button {
-      position: absolute;
-      bottom: var(--pad);
-      right: var(--pad);
+    /* Buttons within cards should sit at the bottom right without covering text */
+    .button-row {
+      display: flex;
+      justify-content: flex-end;
+      margin-top: var(--gap);
     }
   </style>
 </head>
@@ -104,25 +105,33 @@
     <section id="securitySection" class="card security">
       <h2 id="securityTitle"></h2>
       <p id="securityText"></p>
-      <button id="securityButton"></button>
+      <div class="button-row">
+        <button id="securityButton"></button>
+      </div>
     </section>
     <!-- Tag generator section -->
     <section id="tagSection" class="card">
       <h2 id="tagTitle"></h2>
       <p id="tagText"></p>
-      <button id="tagButton"></button>
+      <div class="button-row">
+        <button id="tagButton"></button>
+      </div>
     </section>
     <!-- Editor onboarding section -->
     <section id="editorSection" class="card">
       <h2 id="editorTitle"></h2>
       <p id="editorText"></p>
-      <button id="downloadAgreementButton"></button>
+      <div class="button-row">
+        <button id="downloadAgreementButton"></button>
+      </div>
     </section>
     <!-- System overview section -->
     <section id="systemSection" class="card">
       <h2 id="systemTitle"></h2>
       <p id="systemText"></p>
-      <button id="systemButton"></button>
+      <div class="button-row">
+        <button id="systemButton"></button>
+      </div>
     </section>
   </div>
 
