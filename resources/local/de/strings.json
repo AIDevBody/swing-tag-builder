@@ -42,6 +42,14 @@
   "system_section_title": "Wie das System & die Tags funktionieren",
   "system_section_text": "Erfahre, wie Tags bestimmen, welche Events in Feeds erscheinen.",
   "learn_more_button": "Mehr erfahren",
+  "followers_section_title": "Wie Fans ihren Feed wählen",
+  "followers_section_intro": "Fans abonnieren die gleichen Tags, die Editor:innen vergeben – konsequentes Tagging sorgt also dafür, dass die richtigen Events ankommen.",
+  "followers_section_steps": [
+    "Öffne find-me-dance und stöbere im öffentlichen Feed, um aktuelle Szenen zu entdecken.",
+    "Nutze die Tag-Filter (Stadt, Tanzstil, Tempo, Intensität usw.), um die Stimmung zu definieren, der du folgen möchtest.",
+    "Speichere diese Filterkombination als deinen persönlichen Feed, damit neue getaggte Events sofort auftauchen."
+  ],
+  "followers_section_button": "find-me-dance auf GitHub ansehen",
   "security_page_title": "Calendar Editors — Sicherheit & Onboarding",
   "quick_model_page_title": "Tag‑basierter Event‑Feed: Kurzmodell",
   "back_button": "Zurück"

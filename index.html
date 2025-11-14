@@ -69,6 +69,12 @@
       margin-bottom: 14px;
       line-height: 1.4;
     }
+    ul {
+      margin-top: 0;
+      margin-bottom: 14px;
+      padding-left: 20px;
+      line-height: 1.4;
+    }
     button {
       background: #1a2540;
       color: #eaf0ff;
@@ -131,6 +137,15 @@
       <p id="systemText"></p>
       <div class="button-row">
         <button id="systemButton"></button>
+      </div>
+    </section>
+    <!-- Followers explanation section -->
+    <section id="followersSection" class="card">
+      <h2 id="followersTitle"></h2>
+      <p id="followersIntro"></p>
+      <ul id="followersSteps"></ul>
+      <div class="button-row">
+        <button id="followersButton"></button>
       </div>
     </section>
   </div>
@@ -204,6 +219,23 @@
     document.getElementById('systemTitle').textContent = strings.system_section_title || 'How the system & tags work';
     document.getElementById('systemText').textContent = strings.system_section_text || '';
     document.getElementById('systemButton').textContent = strings.learn_more_button || 'Learn more';
+    // followers feed explanation
+    document.getElementById('followersTitle').textContent = strings.followers_section_title || 'How followers pick a feed';
+    document.getElementById('followersIntro').textContent = strings.followers_section_intro || 'Fans build a personalised feed by following the same tags you add to events.';
+    const stepList = document.getElementById('followersSteps');
+    stepList.innerHTML = '';
+    const fallbackSteps = [
+      'Open find-me-dance and browse the public feed to discover tags.',
+      'Select the tag filters (city, style, intensity, etc.) that match the scenes you want to follow.',
+      'Save the filter group to keep receiving a personalised stream of events.'
+    ];
+    const steps = strings.followers_section_steps || fallbackSteps;
+    steps.forEach(step => {
+      const li = document.createElement('li');
+      li.textContent = step;
+      stepList.appendChild(li);
+    });
+    document.getElementById('followersButton').textContent = strings.followers_section_button || 'Visit find-me-dance on GitHub';
   }
 
   function attachHandlers() {
@@ -219,6 +251,9 @@
     });
     document.getElementById('systemButton').addEventListener('click', () => {
       window.location.href = 'quick-model.html';
+    });
+    document.getElementById('followersButton').addEventListener('click', () => {
+      window.open('https://github.com/alijenabidehkordi/find-me-dance', '_blank', 'noopener');
     });
   }
 
