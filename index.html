@@ -235,7 +235,7 @@
       li.textContent = step;
       stepList.appendChild(li);
     });
-    document.getElementById('followersButton').textContent = strings.followers_section_button || 'Visit find-me-dance on GitHub';
+    document.getElementById('followersButton').textContent = strings.followers_section_button || 'Open the find-me-dance feed';
   }
 
   function attachHandlers() {
@@ -253,7 +253,7 @@
       window.location.href = 'quick-model.html';
     });
     document.getElementById('followersButton').addEventListener('click', () => {
-      window.open('https://github.com/alijenabidehkordi/find-me-dance', '_blank', 'noopener');
+      window.open('https://aidevbody.github.io/find-me-dance/', '_blank', 'noopener');
     });
   }
 
