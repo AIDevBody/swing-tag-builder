@@ -6,6 +6,7 @@ event_type,intensive,Intensivkurs,Intensive,TRUE
 event_type,taster,Schnupperkurs,Taster,TRUE
 event_type,practice,Übungsabend,Practice,TRUE
 event_type,social,Social Dance,Social,TRUE
+event_type,social-tee-dance,Social Dance (Tee Dance),Social (tee dance),TRUE
 event_type,party,Party,Party,TRUE
 event_type,live-music,Livemusik,Live Music,TRUE
 event_type,band-night,Band-Nacht,Band Night,TRUE
